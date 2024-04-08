@@ -1,0 +1,178 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "apu/auth/auth.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "AuthService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthService_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginMessage"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh-token": {
+      "post": {
+        "operationId": "AuthService_RefreshToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/RefreshTokenResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RefreshTokenMessage"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "LoginMessage": {
+      "type": "object",
+      "properties": {
+        "Email": {
+          "type": "string"
+        },
+        "Password": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "Email",
+        "Password"
+      ]
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "AccessToken": {
+          "type": "string"
+        },
+        "TokenType": {
+          "type": "string"
+        },
+        "ExpiresIn": {
+          "type": "string",
+          "format": "int64"
+        },
+        "RefreshToken": {
+          "type": "string"
+        }
+      }
+    },
+    "RefreshTokenMessage": {
+      "type": "object",
+      "properties": {
+        "RefreshToken": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "RefreshToken"
+      ]
+    },
+    "RefreshTokenResponse": {
+      "type": "object",
+      "properties": {
+        "AccessToken": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
