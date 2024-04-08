@@ -20,9 +20,9 @@ import (
 
 var (
 	SupperAdmin = map[string]string{
-		"Email":    "hieunt130@viettel.com.vn",
-		"Password": "vcs2024a@",
-		"FullName": "Nguyen Trung Hieu",
+		"Email":    "",
+		"Password": "",
+		"FullName": "",
 	}
 )
 
