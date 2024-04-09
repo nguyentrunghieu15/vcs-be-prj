@@ -27,7 +27,9 @@ func main() {
 
 	env.Load(".env", authEnv)
 
-	var Address = fmt.Sprintf("%v:%v", env.GetEnv("AUTH_ADDRESS"), env.GetEnv("AUTH_PORT"))
+	var Address = fmt.Sprintf("%v:%v",
+		env.GetEnv("AUTH_ADDRESS"),
+		env.GetEnv("AUTH_PORT"))
 
 	// Create a listener on TCP port
 	lis, err := net.Listen("tcp", Address)

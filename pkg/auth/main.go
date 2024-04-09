@@ -17,7 +17,7 @@ import (
 
 type AuthServer struct {
 	auth.AuthServiceServer
-	UserRepo UserRepositoryDecorator
+	UserRepo model.UserRepositoryDecorator
 	Jwt      JwtService
 	Bcrypt   BcryptService
 	Logger   *logger.LoggerDecorator
@@ -100,11 +100,19 @@ func (s *AuthServer) Login(ctx context.Context, msg *auth.LoginMessage) (*auth.L
 	}, nil
 }
 
-func (s *AuthServer) RefreshToken(ctx context.Context, msg *auth.RefreshTokenMessage) (*auth.RefreshTokenResponse, error) {
+func (s *AuthServer) RefreshToken(
+	ctx context.Context,
+	msg *auth.RefreshTokenMessage,
+) (*auth.RefreshTokenResponse, error) {
 	// Verify token
 	if v, err := s.Jwt.VerifyToken(msg.GetRefreshToken()); v {
 		if err != nil {
-			s.Logger.Log(logger.INFO, LogMessageAuth{"Action": "Ivoked Refresh Token", "Token": msg.GetRefreshToken(), "Error": err})
+			s.Logger.Log(
+				logger.INFO,
+				LogMessageAuth{
+					"Action": "Ivoked Refresh Token",
+					"Token":  msg.GetRefreshToken(),
+					"Error":  err})
 		}
 		return nil, nil
 	}
@@ -113,25 +121,46 @@ func (s *AuthServer) RefreshToken(ctx context.Context, msg *auth.RefreshTokenMes
 	// Check exist user by email
 	user, err := s.UserRepo.FindOneByEmail(claims.Email)
 	if err != nil {
-		s.Logger.Log(logger.INFO, LogMessageAuth{"Action": "Ivoked Refresh Token", "Token": msg.GetRefreshToken(), "Error": err})
+		s.Logger.Log(
+			logger.INFO,
+			LogMessageAuth{"Action": "Ivoked Refresh Token",
+				"Token": msg.GetRefreshToken(),
+				"Error": err,
+			},
+		)
 		return nil, err
 	}
 
 	if user == nil {
-		s.Logger.Log(logger.INFO, LogMessageAuth{"Action": "Ivoked Refresh Token", "Token": msg.GetRefreshToken(), "Error": err})
+		s.Logger.Log(
+			logger.INFO,
+			LogMessageAuth{
+				"Action": "Ivoked Refresh Token",
+				"Token":  msg.GetRefreshToken(),
+				"Error":  err,
+			},
+		)
 		return nil, nil
 	}
 	// Create access token
 	accessToken, err := s.Jwt.GenerateAuthAccessToken(claims.Email)
 	if err != nil {
-		s.Logger.Log(logger.INFO, LogMessageAuth{"Action": "Ivoked Refresh Token", "Token": msg.GetRefreshToken(), "Error": err})
+		s.Logger.Log(
+			logger.INFO,
+			LogMessageAuth{
+				"Action": "Ivoked Refresh Token",
+				"Token":  msg.GetRefreshToken(),
+				"Error":  err,
+			},
+		)
 		return nil, err
 	}
 	return &auth.RefreshTokenResponse{AccessToken: accessToken}, nil
 }
 
 func CreateAuthServer() *AuthServer {
-	dsnPostgres := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
+	dsnPostgres := fmt.Sprintf(
+		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
 		env.GetEnv("POSTGRES_ADDRESS"),
 		env.GetEnv("POSTGRES_USERNAME"),
 		env.GetEnv("POSTGRES_PASSWORD"),
@@ -139,14 +168,18 @@ func CreateAuthServer() *AuthServer {
 		env.GetEnv("POSTGRES_PORT"),
 		env.GetEnv("POSTGRES_SSLMODE"),
 	)
-	postgres, err := managedb.GetConnection(managedb.Connection{Context: &managedb.PostgreContext{}, Dsn: dsnPostgres})
+	postgres, err := managedb.GetConnection(
+		managedb.Connection{
+			Context: &managedb.PostgreContext{},
+			Dsn:     dsnPostgres,
+		})
 	if err != nil {
 		log.Fatalf("AuthService : Can't connect to PostgresSQL Database :%v", err)
 	}
 	log.Println("Connected database")
 	var authServer AuthServer
 	connPostgres, _ := postgres.(*gorm.DB)
-	authServer.UserRepo.UserRepository = *model.CreateUserRepository(connPostgres)
+	authServer.UserRepo = model.CreateUserRepository(connPostgres)
 	authServer.Jwt.SecretKey = env.GetEnv("JWT_SECRETKEY").(string)
 	return &authServer
 }

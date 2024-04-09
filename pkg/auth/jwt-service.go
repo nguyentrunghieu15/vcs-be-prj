@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -31,7 +30,8 @@ func (j *JwtService) GenerateAuthAccessToken(email string) (string, error) {
 		email,
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(expire_time))),
+			ExpiresAt: jwt.NewNumericDate(
+				time.Now().Add(time.Second * time.Duration(expire_time))),
 		},
 	}
 	return j.GenerateToken(authClaims)
@@ -42,7 +42,8 @@ func (j *JwtService) GenerateAuthRefreshToken(email string) (string, error) {
 		email,
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(9000))),
+			ExpiresAt: jwt.NewNumericDate(
+				time.Now().Add(time.Second * time.Duration(9000))),
 		},
 	}
 	return j.GenerateToken(authClaims)
@@ -53,8 +54,7 @@ func (j *JwtService) VerifyToken(token string) (bool, error) {
 		return []byte(j.SecretKey), nil
 	}, jwt.WithLeeway(5*time.Second))
 	if err != nil {
-		log.Printf("JWT Service: %v", err)
-		return false, nil
+		return false, fmt.Errorf("JWT Service: %v", err)
 	} else if _, ok := result.Claims.(*AuthJwtClaims); ok {
 		return true, nil
 	} else {

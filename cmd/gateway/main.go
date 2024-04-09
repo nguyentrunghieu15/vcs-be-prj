@@ -22,7 +22,8 @@ import (
 
 func CreateSupperAdmin() {
 
-	dsnPostgres := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
+	dsnPostgres := fmt.Sprintf(
+		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
 		env.GetEnv("POSTGRES_ADDRESS"),
 		env.GetEnv("POSTGRES_USERNAME"),
 		env.GetEnv("POSTGRES_PASSWORD"),
@@ -39,14 +40,18 @@ func CreateSupperAdmin() {
 		}
 	)
 
-	postgres, err := managedb.GetConnection(managedb.Connection{Context: &managedb.PostgreContext{}, Dsn: dsnPostgres})
+	postgres, err := managedb.GetConnection(
+		managedb.Connection{
+			Context: &managedb.PostgreContext{},
+			Dsn:     dsnPostgres,
+		})
+
 	if err != nil {
 		log.Fatalf("AuthService : Can't connect to PostgresSQL Database :%v", err)
 	}
 	log.Println("Auth Services: Connected database")
 	connPostgres, _ := postgres.(*gorm.DB)
 	hashPassword, err := (&auth.BcryptService{}).HashPassword(SupperAdmin["Password"])
-	fmt.Println(hashPassword)
 	if err != nil {
 		log.Fatalln("Can't hash password of supper admin")
 	}
@@ -56,6 +61,7 @@ func CreateSupperAdmin() {
 			Password:      hashPassword,
 			FullName:      SupperAdmin["FullName"],
 			IsSupperAdmin: true,
+			Roles:         model.RoleAdmin,
 		})
 	if err != nil {
 		log.Fatalln("Can't create supper admin", err)
@@ -91,7 +97,7 @@ func main() {
 		FileNameLogBase: "VCS_MSM"}
 	e.Use(newLogger.ImplementedMiddlewareLogger())
 	e.Use(middleware.Recover())
-	e.Static("/static", "/static")
+	e.Static("/static", "static")
 
 	createAdmin := flag.Bool("create-admin", false, "Create a supperadmin account")
 
@@ -103,11 +109,16 @@ func main() {
 	mux := runtime.NewServeMux()
 	//...
 
-	authpb.RegisterAuthServiceHandlerFromEndpoint(context.Background(), mux,
+	authpb.RegisterAuthServiceHandlerFromEndpoint(
+		context.Background(),
+		mux,
 		fmt.Sprintf("%v:%v", env.GetEnv("AUTH_ADDRESS"), env.GetEnv("AUTH_PORT")),
 		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 
-	e.Any("/api/v1/auth/*", echo.WrapHandler(mux)) // all HTTP requests starting with `/prefix` are handled by `grpc-gateway`
+	e.Any(
+		"/api/v1/auth/*",
+		echo.WrapHandler(mux),
+	) // all HTTP requests starting with `/prefix` are handled by `grpc-gateway`
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%v:%v", env.GetEnv("GATEWAY_ADDRESS"), env.GetEnv("GATEWAY_PORT"))))
 }
