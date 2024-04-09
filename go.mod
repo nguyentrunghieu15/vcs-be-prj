@@ -5,8 +5,9 @@ go 1.21.6
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
+	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
-	github.com/nguyentrunghieu15/vcs-common-prj v0.0.3
+	github.com/nguyentrunghieu15/vcs-common-prj v0.0.4
 	golang.org/x/crypto v0.22.0
 	google.golang.org/grpc v1.62.1
 	gorm.io/gorm v1.25.9

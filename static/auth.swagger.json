@@ -97,32 +97,32 @@
     "LoginMessage": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "Password": {
+        "password": {
           "type": "string"
         }
       },
       "required": [
-        "Email",
-        "Password"
+        "email",
+        "password"
       ]
     },
     "LoginResponse": {
       "type": "object",
       "properties": {
-        "AccessToken": {
+        "accessToken": {
           "type": "string"
         },
-        "TokenType": {
+        "tokenType": {
           "type": "string"
         },
-        "ExpiresIn": {
+        "expiresIn": {
           "type": "string",
           "format": "int64"
         },
-        "RefreshToken": {
+        "refreshToken": {
           "type": "string"
         }
       }
@@ -130,18 +130,18 @@
     "RefreshTokenMessage": {
       "type": "object",
       "properties": {
-        "RefreshToken": {
+        "refreshToken": {
           "type": "string"
         }
       },
       "required": [
-        "RefreshToken"
+        "refreshToken"
       ]
     },
     "RefreshTokenResponse": {
       "type": "object",
       "properties": {
-        "AccessToken": {
+        "accessToken": {
           "type": "string"
         }
       }

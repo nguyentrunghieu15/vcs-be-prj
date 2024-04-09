@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -47,18 +48,18 @@ func (j *JwtService) GenerateAuthRefreshToken(email string) (string, error) {
 	return j.GenerateToken(authClaims)
 }
 
-func (j *JwtService) VerifyToken(token string) bool {
+func (j *JwtService) VerifyToken(token string) (bool, error) {
 	result, err := jwt.ParseWithClaims(token, &AuthJwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(j.SecretKey), nil
 	}, jwt.WithLeeway(5*time.Second))
 	if err != nil {
 		log.Printf("JWT Service: %v", err)
-		return false
+		return false, nil
 	} else if _, ok := result.Claims.(*AuthJwtClaims); ok {
-		return true
+		return true, nil
 	} else {
-		log.Printf("JWT Service: Unknown claims type, cannot proceed")
-		return false
+		return false, fmt.Errorf("JWT Service: Unknown claims type, cannot proceed")
+
 	}
 }
 
