@@ -1,18 +1,57 @@
 package user
 
 import (
+	"strings"
+
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"gorm.io/gorm"
 )
 
 type UserRepositoryDecorator struct {
 	*model.UserRepository
+	db *gorm.DB
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepositoryDecorator {
-	return &UserRepositoryDecorator{model.CreateUserRepository(db)}
+	return &UserRepositoryDecorator{model.CreateUserRepository(db), db}
 }
 
-func (u *UserRepositoryDecorator) FindUsers() {
+func TypeSortToString(v model.TypeSort) string {
+	switch v {
+	case model.ASC, model.NONE:
+		return ""
+	case model.DESC:
+		return "desc"
+	}
+	return ""
+}
 
+func (u *UserRepositoryDecorator) FindUsers(filter model.FilterQueryInterface) ([]model.User, error) {
+	var user []model.User
+	var orderQuery string
+	offSet := filter.GetPage() * filter.GetPageSize()
+	if strings.Trim(filter.GetSortBy(), " ") == "" {
+		orderQuery = strings.Trim(filter.GetSortBy(), " ") + " " + TypeSortToString(filter.GetSort())
+	}
+
+	var result = u.db
+
+	if filter.GetLimit() != -1 {
+		result = result.Limit(int(filter.GetLimit()))
+	}
+
+	if filter.GetPage() != -1 && filter.GetPageSize() != -1 {
+		result = result.Offset(int(offSet))
+	}
+
+	if filter.GetSortBy() != "" {
+		result = result.Order(orderQuery)
+	}
+
+	result = result.Find(&user)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return user, nil
 }

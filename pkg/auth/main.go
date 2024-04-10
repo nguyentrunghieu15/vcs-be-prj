@@ -105,6 +105,12 @@ func (s *AuthServer) RefreshToken(
 	ctx context.Context,
 	msg *auth.RefreshTokenMessage,
 ) (*auth.RefreshTokenResponse, error) {
+	s.Logger.Log(
+		logger.INFO,
+		LogMessageAuth{
+			"Action": "Ivoked Refresh token",
+		})
+
 	// Verify token
 	if v, err := s.Jwt.VerifyToken(msg.GetRefreshToken()); v {
 		if err != nil {
@@ -159,7 +165,7 @@ func (s *AuthServer) RefreshToken(
 	return &auth.RefreshTokenResponse{AccessToken: accessToken}, nil
 }
 
-func CreateAuthServer() *AuthServer {
+func NewAuthServer() *AuthServer {
 	dsnPostgres := fmt.Sprintf(
 		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
 		env.GetEnv("POSTGRES_ADDRESS"),
@@ -183,5 +189,12 @@ func CreateAuthServer() *AuthServer {
 	connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
 	authServer.UserRepo = model.CreateUserRepository(connPostgres)
 	authServer.Jwt.SecretKey = env.GetEnv("JWT_SECRETKEY").(string)
+	newLogger := logger.NewLogger()
+	newLogger.Config = logger.LoggerConfig{
+		IsLogRotate:     true,
+		PathToLog:       env.GetEnv("AUTH_LOG_PATH").(string),
+		FileNameLogBase: env.GetEnv("AUTH_NAME_FILE_LOG").(string),
+	}
+	authServer.Logger = newLogger
 	return &authServer
 }

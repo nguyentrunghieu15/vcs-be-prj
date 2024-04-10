@@ -11,8 +11,10 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
+	gateway_middleware "github.com/nguyentrunghieu15/vcs-be-prj/pkg/gateway/middleware"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
 	authpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/auth"
+	userpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"google.golang.org/grpc"
@@ -69,17 +71,23 @@ func CreateSupperAdmin() {
 }
 
 func main() {
-
 	gatewayConfigEnv := map[string]env.ConfigEnv{
+		"JWT_SECRETKEY": {IsRequire: true, Type: env.STRING},
+
 		"ADMIN_EMAIL":    {IsRequire: true, Type: env.STRING},
 		"ADMIN_PASSWORD": {IsRequire: true, Type: env.STRING},
 		"ADMIN_FULLNAME": {IsRequire: true, Type: env.STRING},
 
-		"GATEWAY_PORT":    {IsRequire: true, Type: env.INT},
-		"GATEWAY_ADDRESS": {IsRequire: true, Type: env.STRING},
+		"GATEWAY_PORT":          {IsRequire: true, Type: env.INT},
+		"GATEWAY_ADDRESS":       {IsRequire: true, Type: env.STRING},
+		"GATEWAY_LOG_PATH":      {IsRequire: true, Type: env.STRING},
+		"GATEWAY_NAME_FILE_LOG": {IsRequire: true, Type: env.STRING},
 
 		"AUTH_PORT":    {IsRequire: true, Type: env.INT},
 		"AUTH_ADDRESS": {IsRequire: true, Type: env.STRING},
+
+		"USER_PORT":    {IsRequire: true, Type: env.INT},
+		"USER_ADDRESS": {IsRequire: true, Type: env.STRING},
 
 		"POSTGRES_ADDRESS":  {IsRequire: true, Type: env.STRING},
 		"POSTGRES_PORT":     {IsRequire: true, Type: env.INT},
@@ -93,8 +101,9 @@ func main() {
 	newLogger := logger.NewLogger()
 	newLogger.Config = logger.LoggerConfig{
 		IsLogRotate:     true,
-		PathToLog:       "log/gateway/",
-		FileNameLogBase: "VCS_MSM"}
+		PathToLog:       env.GetEnv("GATEWAY_LOG_PATH").(string),
+		FileNameLogBase: env.GetEnv("GATEWAY_NAME_FILE_LOG").(string),
+	}
 	e.Use(newLogger.ImplementedMiddlewareLogger())
 	e.Use(middleware.Recover())
 	e.Static("/static", "static")
@@ -109,16 +118,36 @@ func main() {
 	mux := runtime.NewServeMux()
 	//...
 
-	authpb.RegisterAuthServiceHandlerFromEndpoint(
+	err := authpb.RegisterAuthServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		fmt.Sprintf("%v:%v", env.GetEnv("AUTH_ADDRESS"), env.GetEnv("AUTH_PORT")),
-		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	)
+
+	if err != nil {
+		log.Fatalln("Can't connect to Auth service")
+	}
 
 	e.Any(
-		"/api/v1/auth/*",
+		"/api/v1/auth*",
 		echo.WrapHandler(mux),
-	) // all HTTP requests starting with `/prefix` are handled by `grpc-gateway`
+	)
+
+	err = userpb.RegisterUserServiceHandlerFromEndpoint(
+		context.Background(),
+		mux,
+		fmt.Sprintf("%v:%v", env.GetEnv("USER_ADDRESS"), env.GetEnv("USER_PORT")),
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+
+	if err != nil {
+		log.Fatalln("Can't connect to User service")
+	}
+	e.Any(
+		"/api/v1/user*",
+		echo.WrapHandler(mux),
+		gateway_middleware.UseJwtMiddleware(),
+	)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%v:%v", env.GetEnv("GATEWAY_ADDRESS"), env.GetEnv("GATEWAY_PORT"))))
 }

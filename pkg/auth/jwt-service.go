@@ -2,11 +2,10 @@ package auth
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 )
 
 type AuthJwtClaims struct {
@@ -25,7 +24,7 @@ func (j *JwtService) GenerateToken(claims jwt.Claims) (string, error) {
 }
 
 func (j *JwtService) GenerateAuthAccessToken(email string) (string, error) {
-	expire_time, _ := strconv.Atoi(os.Getenv("EXPIRE_TIME"))
+	expire_time := env.GetEnv("JWT_EXPIRE_TIME").(int)
 	authClaims := AuthJwtClaims{
 		email,
 		jwt.RegisteredClaims{
