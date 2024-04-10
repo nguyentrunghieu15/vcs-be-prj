@@ -26,6 +26,12 @@
               "$ref": "#/definitions/User"
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -41,6 +47,12 @@
             "schema": {
               "$ref": "#/definitions/CreateUserRequest"
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -58,35 +70,10 @@
               "$ref": "#/definitions/ListUsersResponse"
             }
           },
-          "default": {
-            "description": "An unexpected error response.",
+          "401": {
+            "description": "Unauthorized",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "UserService"
-        ]
-      }
-    },
-    "/api/v1/user/{Id}": {
-      "get": {
-        "operationId": "UserService_GetUser",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/User"
             }
           },
           "default": {
@@ -98,11 +85,49 @@
         },
         "parameters": [
           {
-            "name": "Id",
-            "in": "path",
-            "required": true,
+            "name": "filter.limit",
+            "in": "query",
+            "required": false,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "filter.page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filter.pageSize",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filter.sort",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "NONE",
+              "ASC",
+              "DESC"
+            ],
+            "default": "NONE"
+          },
+          {
+            "name": "filter.sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -111,14 +136,19 @@
       }
     },
     "/api/v1/user/{id}": {
-      "delete": {
-        "operationId": "UserService_DeleteUSer",
+      "get": {
+        "operationId": "UserService_GetUser",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "type": "object",
-              "properties": {}
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -135,6 +165,54 @@
             "required": true,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      },
+      "delete": {
+        "operationId": "UserService_DeleteUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -148,6 +226,12 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -184,25 +268,48 @@
     "CreateUserRequest": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "FullName": {
+        "fullName": {
           "type": "string"
         },
-        "Phone": {
+        "phone": {
           "type": "string"
         },
-        "Avatar": {
+        "avatar": {
           "type": "string"
         },
-        "IsSupperAdmin": {
+        "isSupperAdmin": {
           "type": "boolean"
         },
-        "Roles": {
+        "roles": {
           "$ref": "#/definitions/UserRole"
         },
-        "Password": {
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "Filter": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "string",
+          "format": "int64"
+        },
+        "pageSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sort": {
+          "$ref": "#/definitions/TypeSort"
+        },
+        "sortBy": {
           "type": "string"
         }
       }
@@ -210,7 +317,7 @@
     "ListUsersResponse": {
       "type": "object",
       "properties": {
-        "Users": {
+        "users": {
           "type": "array",
           "items": {
             "type": "object",
@@ -219,28 +326,55 @@
         }
       }
     },
+    "TypeSort": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "ASC",
+        "DESC"
+      ],
+      "default": "NONE"
+    },
     "User": {
       "type": "object",
       "properties": {
-        "Email": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
           "type": "string"
         },
-        "FullName": {
+        "createdBy": {
+          "type": "string",
+          "format": "int64"
+        },
+        "updatedAt": {
           "type": "string"
         },
-        "Phone": {
+        "updatedBy": {
+          "type": "string",
+          "format": "int64"
+        },
+        "email": {
           "type": "string"
         },
-        "Avatar": {
+        "fullName": {
           "type": "string"
         },
-        "IsSupperAdmin": {
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "isSupperAdmin": {
           "type": "boolean"
         },
-        "Roles": {
+        "roles": {
           "$ref": "#/definitions/UserRole"
         },
-        "Password": {
+        "password": {
           "type": "string"
         }
       }
@@ -256,25 +390,25 @@
     "UserServiceUpdateUserBody": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "FullName": {
+        "fullName": {
           "type": "string"
         },
-        "Phone": {
+        "phone": {
           "type": "string"
         },
-        "Avatar": {
+        "avatar": {
           "type": "string"
         },
-        "IsSupperAdmin": {
+        "isSupperAdmin": {
           "type": "boolean"
         },
-        "Roles": {
+        "roles": {
           "$ref": "#/definitions/UserRole"
         },
-        "Password": {
+        "password": {
           "type": "string"
         }
       }

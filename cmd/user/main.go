@@ -5,20 +5,21 @@ import (
 	"log"
 	"net"
 
-	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
-	pb "github.com/nguyentrunghieu15/vcs-common-prj/apu/auth"
+	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/user"
+	pb "github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"google.golang.org/grpc"
 )
 
 func main() {
 	authEnv := map[string]env.ConfigEnv{
-		"JWT_SECRETKEY": {IsRequire: true, Type: env.STRING},
+		"AUTH_PORT":    {IsRequire: true, Type: env.INT},
+		"AUTH_ADDRESS": {IsRequire: true, Type: env.STRING},
 
-		"AUTH_PORT":          {IsRequire: true, Type: env.INT},
-		"AUTH_ADDRESS":       {IsRequire: true, Type: env.STRING},
-		"AUTH_LOG_PATH":      {IsRequire: true, Type: env.STRING},
-		"AUTH_NAME_FILE_LOG": {IsRequire: true, Type: env.STRING},
+		"USER_PORT":          {IsRequire: true, Type: env.INT},
+		"USER_ADDRESS":       {IsRequire: true, Type: env.STRING},
+		"USER_LOG_PATH":      {IsRequire: true, Type: env.STRING},
+		"USER_NAME_FILE_LOG": {IsRequire: true, Type: env.STRING},
 
 		"POSTGRES_ADDRESS":  {IsRequire: true, Type: env.STRING},
 		"POSTGRES_PORT":     {IsRequire: true, Type: env.INT},
@@ -31,8 +32,8 @@ func main() {
 	env.Load(".env", authEnv)
 
 	var Address = fmt.Sprintf("%v:%v",
-		env.GetEnv("AUTH_ADDRESS"),
-		env.GetEnv("AUTH_PORT"))
+		env.GetEnv("USER_ADDRESS"),
+		env.GetEnv("USER_PORT"))
 
 	// Create a listener on TCP port
 	lis, err := net.Listen("tcp", Address)
@@ -42,10 +43,10 @@ func main() {
 
 	// Create a gRPC server object
 	s := grpc.NewServer()
-	authServer := auth.NewAuthServer()
+	userServer := user.NewUserServer()
 
 	// Attach the Greeter service to the server
-	pb.RegisterAuthServiceServer(s, authServer)
+	pb.RegisterUserServiceServer(s, userServer)
 	// Serve gRPC Server
 	log.Println("Serving gRPC on ", Address)
 	log.Fatal(s.Serve(lis))
