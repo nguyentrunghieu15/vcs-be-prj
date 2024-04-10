@@ -67,6 +67,8 @@ github.com/nguyentrunghieu15/vcs-common-prj v0.0.8 h1:kkcCLJqnDUpwC0F7PKfLWJMb5G
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.8/go.mod h1:bUBOPY0hSSqg2gLjmizm7EQzBP6wA/hLq5eiC2RQ1as=
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.9 h1:4BwMLRkn880JZQvj0Od4/gYGqm6PlYAsDbm6xXfn+iA=
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.9/go.mod h1:bUBOPY0hSSqg2gLjmizm7EQzBP6wA/hLq5eiC2RQ1as=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.10 h1:+Z8f66sAaUqKjB9qIyZ1d/KzfMthTjUXeDkHMt+uzYU=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.10/go.mod h1:bUBOPY0hSSqg2gLjmizm7EQzBP6wA/hLq5eiC2RQ1as=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/redis/go-redis/v9 v9.5.1 h1:H1X4D3yHPaYrkL5X06Wh6xNVM/pX0Ft4RV0vMGvLBh8=

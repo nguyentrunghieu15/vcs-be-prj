@@ -118,25 +118,33 @@ func main() {
 	mux := runtime.NewServeMux()
 	//...
 
-	authpb.RegisterAuthServiceHandlerFromEndpoint(
+	err := authpb.RegisterAuthServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		fmt.Sprintf("%v:%v", env.GetEnv("AUTH_ADDRESS"), env.GetEnv("AUTH_PORT")),
-		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	)
+
+	if err != nil {
+		log.Fatalln("Can't connect to Auth service")
+	}
 
 	e.Any(
-		"/api/v1/auth/*",
+		"/api/v1/auth*",
 		echo.WrapHandler(mux),
 	)
 
-	userpb.RegisterUserServiceHandlerFromEndpoint(
+	err = userpb.RegisterUserServiceHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		fmt.Sprintf("%v:%v", env.GetEnv("USER_ADDRESS"), env.GetEnv("USER_PORT")),
 		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 
+	if err != nil {
+		log.Fatalln("Can't connect to User service")
+	}
 	e.Any(
-		"/api/v1/user/*",
+		"/api/v1/user*",
 		echo.WrapHandler(mux),
 		gateway_middleware.UseJwtMiddleware(),
 	)

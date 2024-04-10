@@ -34,10 +34,22 @@ func (u *UserRepositoryDecorator) FindUsers(filter model.FilterQueryInterface) (
 		orderQuery = strings.Trim(filter.GetSortBy(), " ") + " " + TypeSortToString(filter.GetSort())
 	}
 
-	result := u.db.Limit(int(filter.GetLimit())).
-		Offset(int(offSet)).
-		Order(orderQuery).
-		Find(&user)
+	var result = u.db
+
+	if filter.GetLimit() != -1 {
+		result = result.Limit(int(filter.GetLimit()))
+	}
+
+	if filter.GetPage() != -1 && filter.GetPageSize() != -1 {
+		result = result.Offset(int(offSet))
+	}
+
+	if filter.GetSortBy() != "" {
+		result = result.Order(orderQuery)
+	}
+
+	result = result.Find(&user)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}

@@ -13,8 +13,8 @@ import (
 
 func main() {
 	authEnv := map[string]env.ConfigEnv{
-		"JWT_SECRETKEY": {IsRequire: true, Type: env.STRING},
-
+		"JWT_SECRETKEY":      {IsRequire: true, Type: env.STRING},
+		"JWT_EXPIRE_TIME":    {IsRequire: true, Type: env.INT},
 		"AUTH_PORT":          {IsRequire: true, Type: env.INT},
 		"AUTH_ADDRESS":       {IsRequire: true, Type: env.STRING},
 		"AUTH_LOG_PATH":      {IsRequire: true, Type: env.STRING},

@@ -7,7 +7,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
-	github.com/nguyentrunghieu15/vcs-common-prj v0.0.9
+	github.com/nguyentrunghieu15/vcs-common-prj v0.0.10
 	golang.org/x/crypto v0.22.0
 	google.golang.org/grpc v1.62.1
 	gorm.io/gorm v1.25.9

@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
-	gormLogger "gorm.io/gorm/logger"
 )
 
 type UserServer struct {
@@ -62,6 +61,7 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 			"Action": "Invoked list user",
 		},
 	)
+
 	// Authorize
 
 	// TO-DO : Write codo to Authorize
@@ -260,7 +260,7 @@ func NewUserServer() *UserServer {
 	}
 	log.Println("Connected database")
 	connPostgres, _ := postgres.(*gorm.DB)
-	connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
+	// connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
 	newLogger := logger.NewLogger()
 	newLogger.Config = logger.LoggerConfig{
 		IsLogRotate:     true,
@@ -280,16 +280,25 @@ type FilterAdapter struct {
 
 // GetLimit implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetLimit() int64 {
+	if f.Filter.Limit == nil {
+		return -1
+	}
 	return f.Filter.GetLimit()
 }
 
 // GetPage implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetPage() int64 {
+	if f.Filter.Page == nil {
+		return -1
+	}
 	return f.Filter.GetPage()
 }
 
 // GetPageSize implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetPageSize() int64 {
+	if f.Filter.PageSize == nil {
+		return -1
+	}
 	return f.Filter.GetPageSize()
 }
 
@@ -307,6 +316,9 @@ func (f *FilterAdapter) GetSort() model.TypeSort {
 
 // GetSortBy implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetSortBy() string {
+	if f.Filter.SortBy == nil {
+		return ""
+	}
 	return f.Filter.GetSortBy()
 }
 
