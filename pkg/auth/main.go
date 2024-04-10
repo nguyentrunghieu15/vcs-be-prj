@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 type AuthServer struct {
@@ -179,6 +180,7 @@ func CreateAuthServer() *AuthServer {
 	log.Println("Connected database")
 	var authServer AuthServer
 	connPostgres, _ := postgres.(*gorm.DB)
+	connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
 	authServer.UserRepo = model.CreateUserRepository(connPostgres)
 	authServer.Jwt.SecretKey = env.GetEnv("JWT_SECRETKEY").(string)
 	return &authServer

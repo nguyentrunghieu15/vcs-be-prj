@@ -79,7 +79,7 @@
         ]
       }
     },
-    "/api/v1/user/{Id}": {
+    "/api/v1/user/{id}": {
       "get": {
         "operationId": "UserService_GetUser",
         "responses": {
@@ -98,7 +98,7 @@
         },
         "parameters": [
           {
-            "name": "Id",
+            "name": "id",
             "in": "path",
             "required": true,
             "type": "string",
@@ -108,9 +108,7 @@
         "tags": [
           "UserService"
         ]
-      }
-    },
-    "/api/v1/user/{id}": {
+      },
       "delete": {
         "operationId": "UserService_DeleteUSer",
         "responses": {
@@ -184,25 +182,25 @@
     "CreateUserRequest": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "FullName": {
+        "fullName": {
           "type": "string"
         },
-        "Phone": {
+        "phone": {
           "type": "string"
         },
-        "Avatar": {
+        "avatar": {
           "type": "string"
         },
-        "IsSupperAdmin": {
+        "isSupperAdmin": {
           "type": "boolean"
         },
-        "Roles": {
+        "roles": {
           "$ref": "#/definitions/UserRole"
         },
-        "Password": {
+        "password": {
           "type": "string"
         }
       }
@@ -210,7 +208,7 @@
     "ListUsersResponse": {
       "type": "object",
       "properties": {
-        "Users": {
+        "users": {
           "type": "array",
           "items": {
             "type": "object",
@@ -222,25 +220,43 @@
     "User": {
       "type": "object",
       "properties": {
-        "Email": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
           "type": "string"
         },
-        "FullName": {
+        "createdBy": {
+          "type": "string",
+          "format": "int64"
+        },
+        "updatedAt": {
           "type": "string"
         },
-        "Phone": {
+        "updatedBy": {
+          "type": "string",
+          "format": "int64"
+        },
+        "email": {
           "type": "string"
         },
-        "Avatar": {
+        "fullName": {
           "type": "string"
         },
-        "IsSupperAdmin": {
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "isSupperAdmin": {
           "type": "boolean"
         },
-        "Roles": {
+        "roles": {
           "$ref": "#/definitions/UserRole"
         },
-        "Password": {
+        "password": {
           "type": "string"
         }
       }
@@ -256,25 +272,25 @@
     "UserServiceUpdateUserBody": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "FullName": {
+        "fullName": {
           "type": "string"
         },
-        "Phone": {
+        "phone": {
           "type": "string"
         },
-        "Avatar": {
+        "avatar": {
           "type": "string"
         },
-        "IsSupperAdmin": {
+        "isSupperAdmin": {
           "type": "boolean"
         },
-        "Roles": {
+        "roles": {
           "$ref": "#/definitions/UserRole"
         },
-        "Password": {
+        "password": {
           "type": "string"
         }
       }
