@@ -26,8 +26,26 @@
               "$ref": "#/definitions/LoginResponse"
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -41,12 +59,16 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "email",
+            "in": "query",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/LoginMessage"
-            }
+            "type": "string"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -70,6 +92,18 @@
               "$ref": "#/definitions/rpcStatus"
             }
           },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -79,12 +113,10 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "refreshToken",
+            "in": "query",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/RefreshTokenMessage"
-            }
+            "type": "string"
           }
         ],
         "tags": [
@@ -94,21 +126,6 @@
     }
   },
   "definitions": {
-    "LoginMessage": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "email",
-        "password"
-      ]
-    },
     "LoginResponse": {
       "type": "object",
       "properties": {
@@ -126,17 +143,6 @@
           "type": "string"
         }
       }
-    },
-    "RefreshTokenMessage": {
-      "type": "object",
-      "properties": {
-        "refreshToken": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "refreshToken"
-      ]
     },
     "RefreshTokenResponse": {
       "type": "object",

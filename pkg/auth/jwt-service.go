@@ -6,10 +6,13 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
+	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 )
 
 type AuthJwtClaims struct {
 	Email string `json:"email"`
+	Id    int64  `json:"id"`
+	Role  string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -23,10 +26,13 @@ func (j *JwtService) GenerateToken(claims jwt.Claims) (string, error) {
 	return ss, err
 }
 
-func (j *JwtService) GenerateAuthAccessToken(email string) (string, error) {
+func (j *JwtService) GenerateAuthAccessToken(email string, id int64, role model.UserRole) (string, error) {
 	expire_time := env.GetEnv("JWT_EXPIRE_TIME").(int)
+	fmt.Println(email, id, role)
 	authClaims := AuthJwtClaims{
 		email,
+		id,
+		string(role),
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
 			ExpiresAt: jwt.NewNumericDate(
@@ -36,9 +42,11 @@ func (j *JwtService) GenerateAuthAccessToken(email string) (string, error) {
 	return j.GenerateToken(authClaims)
 }
 
-func (j *JwtService) GenerateAuthRefreshToken(email string) (string, error) {
+func (j *JwtService) GenerateAuthRefreshToken(email string, id int64, role model.UserRole) (string, error) {
 	authClaims := AuthJwtClaims{
 		email,
+		id,
+		string(role),
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
 			ExpiresAt: jwt.NewNumericDate(

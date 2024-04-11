@@ -1,8 +1,10 @@
 package user
 
 import (
+	"encoding/json"
 	"strings"
 
+	"github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"gorm.io/gorm"
 )
@@ -54,4 +56,70 @@ func (u *UserRepositoryDecorator) FindUsers(filter model.FilterQueryInterface) (
 		return nil, result.Error
 	}
 	return user, nil
+}
+
+func ParseMapCreateUserRequest(req *user.CreateUserRequest) (map[string]interface{}, error) {
+	var fieldName = []string{"Email", "FullName", "Phone", "Avatar", "IsSupperAdmin", "Roles", "Password"}
+	var fieldProtoName = []string{"email", "full_name", "phone", "avatar", "is_supper_admin", "roles", "password"}
+
+	t, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	mapRequest := make(map[string]interface{})
+	result := make(map[string]interface{})
+
+	if err = json.Unmarshal(t, &mapRequest); err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(fieldName); i++ {
+		if value, ok := mapRequest[fieldProtoName[i]]; ok {
+			result[fieldName[i]] = value
+		}
+	}
+
+	if _, ok := result["IsSupperAdmin"]; !ok {
+		result["IsSupperAdmin"] = false
+	}
+
+	if _, ok := result["Roles"]; !ok {
+		result["Roles"] = model.RoleAdmin
+	}
+
+	return result, nil
+}
+
+func ParseMapUpdateUserRequest(req *user.UpdateUserByIdRequest) (map[string]interface{}, error) {
+	var fieldName = []string{"Email", "FullName", "Phone", "Avatar", "IsSupperAdmin", "Roles"}
+	var fieldProtoName = []string{"email", "full_name", "phone", "avatar", "is_supper_admin", "roles"}
+
+	t, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	mapRequest := make(map[string]interface{})
+	result := make(map[string]interface{})
+
+	if err = json.Unmarshal(t, &mapRequest); err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(fieldName); i++ {
+		if value, ok := mapRequest[fieldProtoName[i]]; ok {
+			result[fieldName[i]] = value
+		}
+	}
+
+	if _, ok := result["IsSupperAdmin"]; !ok {
+		result["IsSupperAdmin"] = false
+	}
+
+	if _, ok := result["Roles"]; !ok {
+		result["Roles"] = model.RoleAdmin
+	}
+
+	return result, nil
 }

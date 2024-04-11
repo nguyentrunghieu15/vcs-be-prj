@@ -26,8 +26,26 @@
               "$ref": "#/definitions/ListServersResponse"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -99,8 +117,32 @@
               "$ref": "#/definitions/Server"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "409": {
+            "description": "Already exists",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -114,12 +156,28 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "name",
+            "description": "The Server resource to create.\nThe field name should match the Noun in the method name.",
+            "in": "query",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/CreateServerRequest"
-            }
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ON",
+              "OFF"
+            ],
+            "default": "ON"
+          },
+          {
+            "name": "ipv4",
+            "in": "query",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "Authorization",
@@ -144,8 +202,26 @@
               "properties": {}
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -159,12 +235,43 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ExportServerRequest"
-            }
+            "name": "filter.limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filter.page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filter.pageSize",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filter.sort",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "NONE",
+              "ASC",
+              "DESC"
+            ],
+            "default": "NONE"
+          },
+          {
+            "name": "filter.sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "Authorization",
@@ -188,8 +295,26 @@
               "$ref": "#/definitions/ImportServerResponse"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -238,7 +363,7 @@
           {
             "name": "server.name",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
@@ -255,7 +380,7 @@
           {
             "name": "server.ipv4",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
@@ -280,8 +405,32 @@
               "$ref": "#/definitions/Server"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -323,8 +472,32 @@
               "properties": {}
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -365,8 +538,32 @@
               "$ref": "#/definitions/Server"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -417,8 +614,32 @@
               "$ref": "#/definitions/Server"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -459,8 +680,32 @@
               "properties": {}
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -494,29 +739,6 @@
     }
   },
   "definitions": {
-    "CreateServerRequest": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The Server resource to create.\nThe field name should match the Noun in the method name."
-        },
-        "status": {
-          "$ref": "#/definitions/ServerStatus"
-        },
-        "ipv4": {
-          "type": "string"
-        }
-      }
-    },
-    "ExportServerRequest": {
-      "type": "object",
-      "properties": {
-        "filter": {
-          "$ref": "#/definitions/Filter"
-        }
-      }
-    },
     "Filter": {
       "type": "object",
       "properties": {
@@ -610,7 +832,11 @@
         "ipv4": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "name",
+        "ipv4"
+      ]
     },
     "ServerServiceUpdateServerBody": {
       "type": "object",

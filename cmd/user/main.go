@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	authEnv := map[string]env.ConfigEnv{
+	userEnv := map[string]env.ConfigEnv{
 		"AUTH_PORT":    {IsRequire: true, Type: env.INT},
 		"AUTH_ADDRESS": {IsRequire: true, Type: env.STRING},
 
@@ -29,7 +29,7 @@ func main() {
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
 	}
 
-	env.Load(".env", authEnv)
+	env.Load(".env", userEnv)
 
 	var Address = fmt.Sprintf("%v:%v",
 		env.GetEnv("USER_ADDRESS"),

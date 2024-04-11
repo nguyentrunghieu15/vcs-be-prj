@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
-	gormLogger "gorm.io/gorm/logger"
 )
 
 type AuthServer struct {
@@ -69,7 +68,7 @@ func (s *AuthServer) Login(ctx context.Context, msg *auth.LoginMessage) (*auth.L
 	}
 
 	// Create access token
-	accessToken, err := s.Jwt.GenerateAuthAccessToken(msg.GetEmail())
+	accessToken, err := s.Jwt.GenerateAuthAccessToken(msg.GetEmail(), int64(user.ID), user.Roles)
 	if err != nil {
 		s.Logger.Log(
 			logger.INFO,
@@ -81,7 +80,7 @@ func (s *AuthServer) Login(ctx context.Context, msg *auth.LoginMessage) (*auth.L
 		return nil, status.Errorf(codes.Internal, "Error : %v", err)
 	}
 
-	refreshToken, err := s.Jwt.GenerateAuthRefreshToken(msg.GetEmail())
+	refreshToken, err := s.Jwt.GenerateAuthRefreshToken(msg.GetEmail(), int64(user.ID), user.Roles)
 	if err != nil {
 		s.Logger.Log(
 			logger.INFO,
@@ -150,7 +149,7 @@ func (s *AuthServer) RefreshToken(
 		return nil, nil
 	}
 	// Create access token
-	accessToken, err := s.Jwt.GenerateAuthAccessToken(claims.Email)
+	accessToken, err := s.Jwt.GenerateAuthAccessToken(claims.Email, int64(user.ID), user.Roles)
 	if err != nil {
 		s.Logger.Log(
 			logger.INFO,
@@ -186,7 +185,7 @@ func NewAuthServer() *AuthServer {
 	log.Println("Connected database")
 	var authServer AuthServer
 	connPostgres, _ := postgres.(*gorm.DB)
-	connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
+	// connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
 	authServer.UserRepo = model.CreateUserRepository(connPostgres)
 	authServer.Jwt.SecretKey = env.GetEnv("JWT_SECRETKEY").(string)
 	newLogger := logger.NewLogger()

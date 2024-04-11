@@ -9,66 +9,62 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	gateway_middleware "github.com/nguyentrunghieu15/vcs-be-prj/pkg/gateway/middleware"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
 	authpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/auth"
 	userpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
-	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
-	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"gorm.io/gorm"
 )
 
-func CreateSupperAdmin() {
+// func CreateSupperAdmin() {
 
-	dsnPostgres := fmt.Sprintf(
-		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
-		env.GetEnv("POSTGRES_ADDRESS"),
-		env.GetEnv("POSTGRES_USERNAME"),
-		env.GetEnv("POSTGRES_PASSWORD"),
-		env.GetEnv("POSTGRES_DATABASE"),
-		env.GetEnv("POSTGRES_PORT"),
-		env.GetEnv("POSTGRES_SSLMODE"),
-	)
+// 	dsnPostgres := fmt.Sprintf(
+// 		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
+// 		env.GetEnv("POSTGRES_ADDRESS"),
+// 		env.GetEnv("POSTGRES_USERNAME"),
+// 		env.GetEnv("POSTGRES_PASSWORD"),
+// 		env.GetEnv("POSTGRES_DATABASE"),
+// 		env.GetEnv("POSTGRES_PORT"),
+// 		env.GetEnv("POSTGRES_SSLMODE"),
+// 	)
 
-	var (
-		SupperAdmin = map[string]string{
-			"Email":    env.GetEnv("ADMIN_EMAIL").(string),
-			"Password": env.GetEnv("ADMIN_PASSWORD").(string),
-			"FullName": env.GetEnv("ADMIN_FULLNAME").(string),
-		}
-	)
+// 	var (
+// 		SupperAdmin = map[string]string{
+// 			"Email":    env.GetEnv("ADMIN_EMAIL").(string),
+// 			"Password": env.GetEnv("ADMIN_PASSWORD").(string),
+// 			"FullName": env.GetEnv("ADMIN_FULLNAME").(string),
+// 		}
+// 	)
 
-	postgres, err := managedb.GetConnection(
-		managedb.Connection{
-			Context: &managedb.PostgreContext{},
-			Dsn:     dsnPostgres,
-		})
+// 	postgres, err := managedb.GetConnection(
+// 		managedb.Connection{
+// 			Context: &managedb.PostgreContext{},
+// 			Dsn:     dsnPostgres,
+// 		})
 
-	if err != nil {
-		log.Fatalf("AuthService : Can't connect to PostgresSQL Database :%v", err)
-	}
-	log.Println("Auth Services: Connected database")
-	connPostgres, _ := postgres.(*gorm.DB)
-	hashPassword, err := (&auth.BcryptService{}).HashPassword(SupperAdmin["Password"])
-	if err != nil {
-		log.Fatalln("Can't hash password of supper admin")
-	}
-	err = model.CreateUserRepository(connPostgres).CreateUser(
-		&model.User{
-			Email:         SupperAdmin["Email"],
-			Password:      hashPassword,
-			FullName:      SupperAdmin["FullName"],
-			IsSupperAdmin: true,
-			Roles:         model.RoleAdmin,
-		})
-	if err != nil {
-		log.Fatalln("Can't create supper admin", err)
-	}
-}
+// 	if err != nil {
+// 		log.Fatalf("AuthService : Can't connect to PostgresSQL Database :%v", err)
+// 	}
+// 	log.Println("Auth Services: Connected database")
+// 	connPostgres, _ := postgres.(*gorm.DB)
+// 	hashPassword, err := (&auth.BcryptService{}).HashPassword(SupperAdmin["Password"])
+// 	if err != nil {
+// 		log.Fatalln("Can't hash password of supper admin")
+// 	}
+// 	err = model.CreateUserRepository(connPostgres).CreateUser(
+// 		&model.User{
+// 			Email:         SupperAdmin["Email"],
+// 			Password:      hashPassword,
+// 			FullName:      SupperAdmin["FullName"],
+// 			IsSupperAdmin: true,
+// 			Roles:         model.RoleAdmin,
+// 		})
+// 	if err != nil {
+// 		log.Fatalln("Can't create supper admin", err)
+// 	}
+// }
 
 func main() {
 	gatewayConfigEnv := map[string]env.ConfigEnv{
@@ -112,7 +108,7 @@ func main() {
 
 	flag.Parse()
 	if *createAdmin {
-		CreateSupperAdmin()
+		// CreateSupperAdmin()
 	}
 
 	mux := runtime.NewServeMux()
@@ -147,6 +143,7 @@ func main() {
 		"/api/v1/user*",
 		echo.WrapHandler(mux),
 		gateway_middleware.UseJwtMiddleware(),
+		gateway_middleware.UserParseJWTTokenMiddleware(),
 	)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%v:%v", env.GetEnv("GATEWAY_ADDRESS"), env.GetEnv("GATEWAY_PORT"))))

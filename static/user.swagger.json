@@ -26,8 +26,26 @@
               "$ref": "#/definitions/ListUsersResponse"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -99,8 +117,32 @@
               "$ref": "#/definitions/User"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "409": {
+            "description": "Already exists",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -114,12 +156,123 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "email",
+            "in": "query",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "fullName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "avatar",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "isSupperAdmin",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "roles",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "RoleAdmin",
+              "RoleUser"
+            ],
+            "default": "RoleAdmin"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/api/v1/user/password/change": {
+      "patch": {
+        "operationId": "UserService_ChangePasswordUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/CreateUserRequest"
+              "$ref": "#/definitions/User"
             }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "required": true,
+            "type": "string"
           },
           {
             "name": "Authorization",
@@ -143,8 +296,32 @@
               "$ref": "#/definitions/User"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -185,8 +362,32 @@
               "properties": {}
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -226,8 +427,32 @@
               "$ref": "#/definitions/User"
             }
           },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "401": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
             "schema": {
               "$ref": "#/definitions/rpcStatus"
             }
@@ -248,12 +473,51 @@
             "format": "int64"
           },
           {
-            "name": "body",
-            "in": "body",
+            "name": "email",
+            "in": "query",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserServiceUpdateUserBody"
-            }
+            "type": "string"
+          },
+          {
+            "name": "fullName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "avatar",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "isSupperAdmin",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "roles",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "RoleAdmin",
+              "RoleUser"
+            ],
+            "default": "RoleAdmin"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -263,32 +527,6 @@
     }
   },
   "definitions": {
-    "CreateUserRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "isSupperAdmin": {
-          "type": "boolean"
-        },
-        "roles": {
-          "$ref": "#/definitions/UserRole"
-        },
-        "password": {
-          "type": "string"
-        }
-      }
-    },
     "Filter": {
       "type": "object",
       "properties": {
@@ -371,11 +609,12 @@
         },
         "roles": {
           "$ref": "#/definitions/UserRole"
-        },
-        "password": {
-          "type": "string"
         }
-      }
+      },
+      "required": [
+        "email",
+        "roles"
+      ]
     },
     "UserRole": {
       "type": "string",
@@ -384,32 +623,6 @@
         "RoleUser"
       ],
       "default": "RoleAdmin"
-    },
-    "UserServiceUpdateUserBody": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string"
-        },
-        "isSupperAdmin": {
-          "type": "boolean"
-        },
-        "roles": {
-          "$ref": "#/definitions/UserRole"
-        },
-        "password": {
-          "type": "string"
-        }
-      }
     },
     "protobufAny": {
       "type": "object",

@@ -13,6 +13,7 @@ import (
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
@@ -28,15 +29,28 @@ type UserServer struct {
 // GetUser implements user.UserServiceServer.
 func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (*user.User, error) {
 	u.l.Log(
-		logger.ERROR,
+		logger.INFO,
 		LogMessageUser{
 			"Action": "Invoked get user",
 			"Id":     req.GetId(),
 		},
 	)
+
 	// Authorize
 
 	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get User",
+				"Error":  err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// Get user
 	user, err := u.UserRepo.FindOneById(int(req.GetId()))
@@ -45,7 +59,8 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 			logger.ERROR,
 			LogMessageUser{
 				"Action": "Get User",
-				"Error":  err,
+				"Error":  "Invalid data in request",
+				"Detail": err,
 			},
 		)
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -56,15 +71,27 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 // ListUsers implements user.UserServiceServer.
 func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) (*user.ListUsersResponse, error) {
 	u.l.Log(
-		logger.ERROR,
+		logger.INFO,
 		LogMessageUser{
 			"Action": "Invoked list user",
 		},
 	)
-
 	// Authorize
 
 	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "List User",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// Get user
 	users, err := u.UserRepo.FindUsers(&FilterAdapter{Filter: req.GetFilter()})
@@ -84,7 +111,7 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 // CreateUser implements user.UserServiceServer.
 func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest) (*user.User, error) {
 	u.l.Log(
-		logger.ERROR,
+		logger.INFO,
 		LogMessageUser{
 			"Action": "Invoked create user",
 			"Email":  req.GetEmail(),
@@ -93,6 +120,20 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 	// Authorize
 
 	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create User",
+				"Email":  req.GetEmail(),
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// check user already exsits
 	exsitsUser, _ := u.UserRepo.FindOneByEmail(req.GetEmail())
@@ -123,34 +164,54 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	var user = model.User{
-		Email:         req.GetEmail(),
-		FullName:      req.GetFullName(),
-		Phone:         req.GetPhone(),
-		Password:      hashedPassword,
-		Avatar:        req.GetAvatar(),
-		IsSupperAdmin: req.GetIsSupperAdmin(),
-		Roles:         ConvertUserRoleProtoToUserRoleModel(req.GetRoles()),
-	}
-	err = u.UserRepo.CreateUser(&user)
+
+	user, err := ParseMapCreateUserRequest(req)
 	if err != nil {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
 				"Action": "Create User",
-				"Error":  "Can't create",
 				"Detail": err,
 			},
 		)
-		return nil, status.Error(codes.AlreadyExists, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return ConvertUserModelToUserProto(user), nil
+
+	user["Password"] = hashedPassword
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create User",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	fmt.Println(header["id"])
+
+	// err = u.UserRepo.CreateUser(user)
+	// if err != nil {
+	// 	u.l.Log(
+	// 		logger.ERROR,
+	// 		LogMessageUser{
+	// 			"Action": "Create User",
+	// 			"Error":  "Can't create",
+	// 			"Detail": err,
+	// 		},
+	// 	)
+	// 	return nil, status.Error(codes.Internal, err.Error())
+	// }
+	// return ConvertUserModelToUserProto(user), nil
+	return nil, nil
 }
 
 // UpdateUser implements user.UserServiceServer.
 func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdRequest) (*user.User, error) {
 	u.l.Log(
-		logger.ERROR,
+		logger.INFO,
 		LogMessageUser{
 			"Action": "Invoked update user",
 			"Id":     req.GetId(),
@@ -159,6 +220,19 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 	// Authorize
 
 	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Update user",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// check user already exsits
 	_, err := u.UserRepo.FindOneById(int(req.GetId()))
@@ -175,14 +249,19 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 	}
 
 	// Update user
-	var user = model.User{
-		Email:    req.GetEmail(),
-		FullName: req.GetFullName(),
-		Phone:    req.GetPhone(),
-		Avatar:   req.GetAvatar(),
-		Roles:    ConvertUserRoleProtoToUserRoleModel(req.GetRoles()),
+	user, err := ParseMapUpdateUserRequest(req)
+	if err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create User",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-	err = u.UserRepo.UpdateOneById(int(req.GetId()), &user)
+
+	err = u.UserRepo.UpdateOneById(int(req.GetId()), user)
 	if err != nil {
 		u.l.Log(
 			logger.ERROR,
@@ -194,13 +273,14 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return ConvertUserModelToUserProto(user), nil
+	// return ConvertUserModelToUserProto(user), nil
+	return nil, nil
 }
 
 // DeleteUSer implements user.UserServiceServer.
 func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdRequest) (*emptypb.Empty, error) {
 	u.l.Log(
-		logger.ERROR,
+		logger.INFO,
 		LogMessageUser{
 			"Action": "Invoked delete user",
 			"Id":     req.GetId(),
@@ -209,6 +289,19 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 	// Authorize
 
 	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Delete user",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// check user already exsits
 	_, err := u.UserRepo.FindOneById(int(req.GetId()))
@@ -230,13 +323,17 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
-				"Action": "Update User",
-				"Error":  "Can't update user",
+				"Action": "Delete User",
+				"Error":  "Can't delete user",
 				"Detail": err,
 			},
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	return nil, nil
+}
+
+func (u *UserServer) ChangePasswordUser(ctx context.Context, req *user.ChangePasswordRequest) (*user.User, error) {
 	return nil, nil
 }
 
