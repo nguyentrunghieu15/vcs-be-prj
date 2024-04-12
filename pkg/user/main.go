@@ -370,6 +370,7 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 }
 
 func (u *UserServer) ChangePasswordUser(ctx context.Context, req *user.ChangePasswordRequest) (*user.User, error) {
+	// TO-DO code
 	return nil, nil
 }
 
@@ -462,7 +463,7 @@ func ConvertUserRoleModelToUserRoleProto(role model.UserRole) user.UserRole {
 	case model.RoleUser:
 		return user.UserRole_RoleUser
 	default:
-		return user.UserRole_RoleUser
+		return user.UserRole_RoleNone
 	}
 }
 
@@ -470,8 +471,10 @@ func ConvertUserRoleProtoToUserRoleModel(role user.UserRole) model.UserRole {
 	switch role {
 	case user.UserRole_RoleAdmin:
 		return model.RoleAdmin
-	default:
+	case user.UserRole_RoleUser:
 		return model.RoleUser
+	default:
+		return ""
 	}
 }
 

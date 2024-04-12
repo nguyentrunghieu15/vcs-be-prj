@@ -804,10 +804,11 @@
     "ServerStatus": {
       "type": "string",
       "enum": [
+        "STATUSNONE",
         "ON",
         "OFF"
       ],
-      "default": "ON"
+      "default": "STATUSNONE"
     },
     "TypeSort": {
       "type": "string",

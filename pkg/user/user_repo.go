@@ -81,8 +81,13 @@ func ParseMapCreateUserRequest(req *user.CreateUserRequest) (map[string]interfac
 		result["IsSupperAdmin"] = false
 	}
 
-	if _, ok := result["Roles"]; !ok {
-		result["Roles"] = model.RoleAdmin
+	if _, ok := result["Roles"]; ok {
+		if result["Roles"] == user.UserRole_RoleAdmin {
+			result["Roles"] = model.RoleAdmin
+		}
+		if result["Roles"] == user.UserRole_RoleUser {
+			result["Roles"] = model.RoleUser
+		}
 	}
 
 	return result, nil
@@ -114,10 +119,13 @@ func ParseMapUpdateUserRequest(req *user.UpdateUserByIdRequest) (map[string]inte
 		result["IsSupperAdmin"] = false
 	}
 
-	if _, ok := result["Roles"]; !ok {
-		result["Roles"] = model.RoleAdmin
-	} else {
-		result["Roles"] = model.RoleUser
+	if _, ok := result["Roles"]; ok {
+		if req.GetRoles() == user.UserRole_RoleAdmin {
+			result["Roles"] = model.RoleAdmin
+		}
+		if req.GetRoles() == user.UserRole_RoleUser {
+			result["Roles"] = model.RoleUser
+		}
 	}
 
 	return result, nil

@@ -28,7 +28,6 @@ func (j *JwtService) GenerateToken(claims jwt.Claims) (string, error) {
 
 func (j *JwtService) GenerateAuthAccessToken(email string, id int64, role model.UserRole) (string, error) {
 	expire_time := env.GetEnv("JWT_EXPIRE_TIME").(int)
-	fmt.Println(email, id, role)
 	authClaims := AuthJwtClaims{
 		email,
 		id,

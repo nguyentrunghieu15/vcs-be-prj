@@ -14,6 +14,7 @@ import (
 	gateway_middleware "github.com/nguyentrunghieu15/vcs-be-prj/pkg/gateway/middleware"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
 	authpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/auth"
+	serverpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	userpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
@@ -89,6 +90,9 @@ func main() {
 		"USER_PORT":    {IsRequire: true, Type: env.INT},
 		"USER_ADDRESS": {IsRequire: true, Type: env.STRING},
 
+		"SERVER_PORT":    {IsRequire: true, Type: env.INT},
+		"SERVER_ADDRESS": {IsRequire: true, Type: env.STRING},
+
 		"POSTGRES_ADDRESS":  {IsRequire: true, Type: env.STRING},
 		"POSTGRES_PORT":     {IsRequire: true, Type: env.INT},
 		"POSTGRES_USERNAME": {IsRequire: true, Type: env.STRING},
@@ -145,6 +149,22 @@ func main() {
 	}
 	e.Any(
 		"/api/v1/user*",
+		echo.WrapHandler(mux),
+		gateway_middleware.UseJwtMiddleware(),
+		gateway_middleware.UserParseJWTTokenMiddleware(),
+	)
+
+	err = serverpb.RegisterServerServiceHandlerFromEndpoint(
+		context.Background(),
+		mux,
+		fmt.Sprintf("%v:%v", env.GetEnv("SERVER_ADDRESS"), env.GetEnv("SERVER_PORT")),
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+
+	if err != nil {
+		log.Fatalln("Can't connect to Server service")
+	}
+	e.Any(
+		"/api/v1/server*",
 		echo.WrapHandler(mux),
 		gateway_middleware.UseJwtMiddleware(),
 		gateway_middleware.UserParseJWTTokenMiddleware(),

@@ -595,10 +595,11 @@
     "UserRole": {
       "type": "string",
       "enum": [
+        "RoleNone",
         "RoleAdmin",
         "RoleUser"
       ],
-      "default": "RoleAdmin"
+      "default": "RoleNone"
     },
     "UserServiceUpdateUserBody": {
       "type": "object",
