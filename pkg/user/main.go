@@ -151,6 +151,19 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 		)
 	}
 
+	//parse data form request
+	user, err := ParseMapCreateUserRequest(req)
+	if err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create User",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	// Create user
 	hashedPassword, err := u.bcrypt.HashPassword(req.GetPassword())
 	if err != nil {
@@ -164,20 +177,9 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
-	user, err := ParseMapCreateUserRequest(req)
-	if err != nil {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Create User",
-				"Detail": err,
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	user["Password"] = hashedPassword
+
+	// Get header
 	header, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		u.l.Log(
@@ -190,22 +192,23 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	fmt.Println(header["id"])
+	if v, ok := header["id"]; ok {
+		user["CreatedBy"] = v[0]
+	}
 
-	// err = u.UserRepo.CreateUser(user)
-	// if err != nil {
-	// 	u.l.Log(
-	// 		logger.ERROR,
-	// 		LogMessageUser{
-	// 			"Action": "Create User",
-	// 			"Error":  "Can't create",
-	// 			"Detail": err,
-	// 		},
-	// 	)
-	// 	return nil, status.Error(codes.Internal, err.Error())
-	// }
-	// return ConvertUserModelToUserProto(user), nil
-	return nil, nil
+	createdUser, err := u.UserRepo.CreateUser(user)
+	if err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create User",
+				"Error":  "Can't create",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return ConvertUserModelToUserProto(*createdUser), nil
 }
 
 // UpdateUser implements user.UserServiceServer.
@@ -248,7 +251,7 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	// Update user
+	//parse data form request
 	user, err := ParseMapUpdateUserRequest(req)
 	if err != nil {
 		u.l.Log(
@@ -261,7 +264,25 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	err = u.UserRepo.UpdateOneById(int(req.GetId()), user)
+	// Get header
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Update User",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if v, ok := header["id"]; ok {
+		user["UpdatedBy"] = v[0]
+	}
+
+	// Update user
+	updatedUser, err := u.UserRepo.UpdateOneById(int(req.GetId()), user)
 	if err != nil {
 		u.l.Log(
 			logger.ERROR,
@@ -273,8 +294,7 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// return ConvertUserModelToUserProto(user), nil
-	return nil, nil
+	return ConvertUserModelToUserProto(*updatedUser), nil
 }
 
 // DeleteUSer implements user.UserServiceServer.
@@ -315,6 +335,22 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 			},
 		)
 		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	// Get header
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Update User",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if v, ok := header["id"]; ok {
+		u.UserRepo.UpdateOneById(int(req.GetId()), map[string]interface{}{"DeletedBy": v[0]})
 	}
 
 	// Delete user

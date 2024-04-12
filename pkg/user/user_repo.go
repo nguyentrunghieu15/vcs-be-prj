@@ -59,9 +59,6 @@ func (u *UserRepositoryDecorator) FindUsers(filter model.FilterQueryInterface) (
 }
 
 func ParseMapCreateUserRequest(req *user.CreateUserRequest) (map[string]interface{}, error) {
-	var fieldName = []string{"Email", "FullName", "Phone", "Avatar", "IsSupperAdmin", "Roles", "Password"}
-	var fieldProtoName = []string{"email", "full_name", "phone", "avatar", "is_supper_admin", "roles", "password"}
-
 	t, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
@@ -74,9 +71,9 @@ func ParseMapCreateUserRequest(req *user.CreateUserRequest) (map[string]interfac
 		return nil, err
 	}
 
-	for i := 0; i < len(fieldName); i++ {
-		if value, ok := mapRequest[fieldProtoName[i]]; ok {
-			result[fieldName[i]] = value
+	for i := 0; i < len(DefinedFieldCreateUserRequest); i++ {
+		if value, ok := mapRequest[DefinedFieldCreateUserRequest[i]["fieldNameProto"]]; ok {
+			result[DefinedFieldCreateUserRequest[i]["fieldNameModel"]] = value
 		}
 	}
 
@@ -119,6 +116,8 @@ func ParseMapUpdateUserRequest(req *user.UpdateUserByIdRequest) (map[string]inte
 
 	if _, ok := result["Roles"]; !ok {
 		result["Roles"] = model.RoleAdmin
+	} else {
+		result["Roles"] = model.RoleUser
 	}
 
 	return result, nil

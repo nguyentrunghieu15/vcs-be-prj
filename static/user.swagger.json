@@ -18,6 +18,7 @@
   "paths": {
     "/api/v1/user": {
       "get": {
+        "summary": "Get list user",
         "operationId": "UserService_ListUsers",
         "responses": {
           "200": {
@@ -109,6 +110,7 @@
         ]
       },
       "post": {
+        "summary": "Create user",
         "operationId": "UserService_CreateUser",
         "responses": {
           "200": {
@@ -156,51 +158,12 @@
         },
         "parameters": [
           {
-            "name": "email",
-            "in": "query",
+            "name": "body",
+            "in": "body",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "fullName",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "phone",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "avatar",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "isSupperAdmin",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "name": "roles",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "enum": [
-              "RoleAdmin",
-              "RoleUser"
-            ],
-            "default": "RoleAdmin"
-          },
-          {
-            "name": "password",
-            "in": "query",
-            "required": true,
-            "type": "string"
+            "schema": {
+              "$ref": "#/definitions/CreateUserRequest"
+            }
           },
           {
             "name": "Authorization",
@@ -216,6 +179,7 @@
     },
     "/api/v1/user/password/change": {
       "patch": {
+        "summary": "Change password",
         "operationId": "UserService_ChangePasswordUser",
         "responses": {
           "200": {
@@ -263,16 +227,12 @@
         },
         "parameters": [
           {
-            "name": "email",
-            "in": "query",
+            "name": "body",
+            "in": "body",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "password",
-            "in": "query",
-            "required": true,
-            "type": "string"
+            "schema": {
+              "$ref": "#/definitions/ChangePasswordRequest"
+            }
           },
           {
             "name": "Authorization",
@@ -288,6 +248,7 @@
     },
     "/api/v1/user/{id}": {
       "get": {
+        "summary": "Get user by id",
         "operationId": "UserService_GetUser",
         "responses": {
           "200": {
@@ -353,6 +314,7 @@
         ]
       },
       "delete": {
+        "summary": "Delete user",
         "operationId": "UserService_DeleteUser",
         "responses": {
           "200": {
@@ -419,6 +381,7 @@
         ]
       },
       "patch": {
+        "summary": "Update user",
         "operationId": "UserService_UpdateUser",
         "responses": {
           "200": {
@@ -473,45 +436,12 @@
             "format": "int64"
           },
           {
-            "name": "email",
-            "in": "query",
+            "name": "body",
+            "in": "body",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "fullName",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "phone",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "avatar",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "isSupperAdmin",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "name": "roles",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "enum": [
-              "RoleAdmin",
-              "RoleUser"
-            ],
-            "default": "RoleAdmin"
+            "schema": {
+              "$ref": "#/definitions/UserServiceUpdateUserBody"
+            }
           },
           {
             "name": "Authorization",
@@ -527,6 +457,52 @@
     }
   },
   "definitions": {
+    "ChangePasswordRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "password"
+      ]
+    },
+    "CreateUserRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "isSupperAdmin": {
+          "type": "boolean"
+        },
+        "roles": {
+          "$ref": "#/definitions/UserRole"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "roles",
+        "password"
+      ]
+    },
     "Filter": {
       "type": "object",
       "properties": {
@@ -623,6 +599,33 @@
         "RoleUser"
       ],
       "default": "RoleAdmin"
+    },
+    "UserServiceUpdateUserBody": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "isSupperAdmin": {
+          "type": "boolean"
+        },
+        "roles": {
+          "$ref": "#/definitions/UserRole"
+        }
+      },
+      "required": [
+        "email",
+        "roles"
+      ]
     },
     "protobufAny": {
       "type": "object",

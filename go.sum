@@ -63,6 +63,10 @@ github.com/nguyentrunghieu15/vcs-common-prj v0.0.12 h1:2VTJ9VVb6ht+zMqE7Nyb1MwWF
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.12/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.13 h1:KR+aO0k701y50/IjGmpiGKMDmLx8hiomDaYAMI4mF9Y=
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.13/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.14 h1:kwyBOeacspv6yDh4N7v6+Xg3SC+3ODBM9QBStCiUXn0=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.14/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.15 h1:Lr9Gd2HCXhNvGYaaVVJY260mGsK3TLgCVmLeUKsrdh0=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.15/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/redis/go-redis/v9 v9.5.1 h1:H1X4D3yHPaYrkL5X06Wh6xNVM/pX0Ft4RV0vMGvLBh8=
