@@ -59,6 +59,8 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.18 h1:y9uU37ICfdHsFU3sgNAMpPfho+NxdQ7oAHd3Fl/wzXA=
 github.com/nguyentrunghieu15/vcs-common-prj v0.0.18/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.19 h1:xccBN1alYDi67CAzF9C8SNCt2FzTjJ/2Ixc1bmhi25A=
+github.com/nguyentrunghieu15/vcs-common-prj v0.0.19/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/redis/go-redis/v9 v9.5.1 h1:H1X4D3yHPaYrkL5X06Wh6xNVM/pX0Ft4RV0vMGvLBh8=

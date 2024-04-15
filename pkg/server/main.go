@@ -215,7 +215,11 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 	}
 	return nil, nil
 }
-func (s *ServerService) DeleteServerByName(ctx context.Context, req *pb.DeleteServerByNameRequest) (*emptypb.Empty, error) {
+
+func (s *ServerService) DeleteServerByName(
+	ctx context.Context,
+	req *pb.DeleteServerByNameRequest,
+) (*emptypb.Empty, error) {
 	s.l.Log(
 		logger.INFO,
 		LogMessageServer{
@@ -439,7 +443,8 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 	}
 
 	// check already exists server
-	if existsServer, _ := s.ServerRepo.FindOneByName(req.GetName()); existsServer != nil && existsServer.ID != uint(req.GetId()) {
+	if existsServer, _ := s.ServerRepo.FindOneByName(req.GetName()); existsServer != nil &&
+		existsServer.ID != uint(req.GetId()) {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{

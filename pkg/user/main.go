@@ -68,6 +68,48 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 	return ConvertUserModelToUserProto(*user), nil
 }
 
+// GetUserByEmail implements user.UserServiceServer.
+func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmailRequest) (*user.User, error) {
+	u.l.Log(
+		logger.INFO,
+		LogMessageUser{
+			"Action": "Invoked get user",
+			"Id":     req.GetEmail(),
+		},
+	)
+
+	// Authorize
+
+	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get User",
+				"Error":  err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Get user
+	user, err := u.UserRepo.FindOneByEmail(req.GetEmail())
+	if err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get User",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+	return ConvertUserModelToUserProto(*user), nil
+}
+
 // ListUsers implements user.UserServiceServer.
 func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) (*user.ListUsersResponse, error) {
 	u.l.Log(
@@ -414,6 +456,9 @@ type FilterAdapter struct {
 
 // GetLimit implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetLimit() int64 {
+	if f.Filter == nil {
+		return -1
+	}
 	if f.Filter.Limit == nil {
 		return -1
 	}
@@ -422,6 +467,9 @@ func (f *FilterAdapter) GetLimit() int64 {
 
 // GetPage implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetPage() int64 {
+	if f.Filter == nil {
+		return -1
+	}
 	if f.Filter.Page == nil {
 		return -1
 	}
@@ -430,6 +478,9 @@ func (f *FilterAdapter) GetPage() int64 {
 
 // GetPageSize implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetPageSize() int64 {
+	if f.Filter == nil {
+		return -1
+	}
 	if f.Filter.PageSize == nil {
 		return -1
 	}
@@ -438,6 +489,9 @@ func (f *FilterAdapter) GetPageSize() int64 {
 
 // GetSort implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetSort() model.TypeSort {
+	if f.Filter == nil {
+		return model.NONE
+	}
 	switch f.Filter.GetSort() {
 	case server.TypeSort_ASC:
 		return model.ASC
@@ -450,6 +504,9 @@ func (f *FilterAdapter) GetSort() model.TypeSort {
 
 // GetSortBy implements model.FilterQueryInterface.
 func (f *FilterAdapter) GetSortBy() string {
+	if f.Filter == nil {
+		return ""
+	}
 	if f.Filter.SortBy == nil {
 		return ""
 	}

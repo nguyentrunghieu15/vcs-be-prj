@@ -50,9 +50,9 @@ func CreateSupperAdmin() {
 		})
 
 	if err != nil {
-		log.Fatalf("AuthService : Can't connect to PostgresSQL Database :%v", err)
+		log.Fatalf("Gateway : Can't connect to PostgresSQL Database :%v", err)
 	}
-	log.Println("Auth Services: Connected database")
+	log.Println("Gateway: Connected database")
 	connPostgres, _ := postgres.(*gorm.DB)
 	hashPassword, err := (&auth.BcryptService{}).HashPassword(SupperAdmin["Password"])
 	if err != nil {
@@ -108,8 +108,13 @@ func main() {
 		PathToLog:       env.GetEnv("GATEWAY_LOG_PATH").(string),
 		FileNameLogBase: env.GetEnv("GATEWAY_NAME_FILE_LOG").(string),
 	}
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+	}))
 	e.Use(newLogger.ImplementedMiddlewareLogger())
 	e.Use(middleware.Recover())
+
 	e.Static("/static", "static")
 
 	createAdmin := flag.Bool("create-admin", false, "Create a supperadmin account")

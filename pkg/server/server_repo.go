@@ -76,6 +76,15 @@ func ParseMapCreateServerRequest(req *pb.CreateServerRequest) (map[string]interf
 			result[DefinedFieldCreateServerRequest[i]["fieldNameModel"]] = value
 		}
 	}
+
+	if _, ok := result["Status"]; ok {
+		if req.GetStatus() == pb.ServerStatus_OFF {
+			result["Status"] = model.Off
+		}
+		if req.GetStatus() == pb.ServerStatus_ON {
+			result["Status"] = model.On
+		}
+	}
 	return result, nil
 }
 
