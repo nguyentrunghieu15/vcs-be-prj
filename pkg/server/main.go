@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
@@ -20,6 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 type ServerService struct {
@@ -48,7 +51,7 @@ func NewServerService() *ServerService {
 	}
 	log.Println("Connected database")
 	connPostgres, _ := postgres.(*gorm.DB)
-	// connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
+	connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Info)
 	newLogger := logger.NewLogger()
 	newLogger.Config = logger.LoggerConfig{
 		IsLogRotate:     true,
@@ -97,7 +100,8 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 				"Detail": fmt.Errorf("Already Exists server name", req.GetName()),
 			},
 		)
-		return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("Already Exists server name", req.GetName()))
+		return nil, status.Error(codes.AlreadyExists,
+			fmt.Sprintf("Already Exists server name", req.GetName()))
 	}
 
 	// Parse data request
@@ -294,7 +298,31 @@ func (s *ServerService) DeleteServerByName(
 	return nil, nil
 }
 func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRequest) (*emptypb.Empty, error) {
-	// TO-DO code
+	s.l.Log(
+		logger.INFO,
+		LogMessageServer{
+			"Action": "Invoked Export server",
+		},
+	)
+	// Authorize
+
+	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Export server",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	fmt.Println(req)
+
 	return nil, nil
 }
 func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerByIdRequest) (*pb.Server, error) {
@@ -399,7 +427,7 @@ func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer)
 	)
 
 	if err != nil {
-		return err
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	defer newF.Close()
@@ -414,7 +442,7 @@ func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer)
 				f, err := excelize.OpenFile(filePath)
 				if err != nil {
 					fmt.Println(err)
-					return err
+					return status.Error(codes.Internal, err.Error())
 				}
 				defer func() {
 					// Close the spreadsheet.
@@ -426,7 +454,7 @@ func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer)
 				rows, err := f.GetRows("Sheet1")
 				if err != nil {
 					fmt.Println(err)
-					return err
+					return status.Error(codes.Internal, err.Error())
 				}
 
 				listServer := make([]map[string]interface{}, 0)
@@ -434,7 +462,7 @@ func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer)
 				fieldName := rows[0]
 				for _, v := range fieldName {
 					if v != "id" && v != "name" && v != "ipv4" && v != "status" {
-						return fmt.Errorf("Invalid field name")
+						return status.Error(codes.InvalidArgument, "Invalid field name")
 					}
 				}
 
@@ -443,22 +471,30 @@ func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer)
 					for idx, colCell := range row {
 						server[fieldName[idx]] = colCell
 					}
+					isValidServer := ValidateServerFormMap(server)
+					if isValidServer != nil {
+						return status.Error(codes.InvalidArgument, isValidServer.Error())
+					}
 					listServer = append(listServer, server)
 				}
 
-				fmt.Println(listServer)
+				userId, _ := strconv.ParseUint(user[0], 0, 0)
+				result, err := s.ServerRepo.CreateBacth(userId, listServer)
+				if err != nil {
+					return status.Error(codes.Internal, err.Error())
+				}
 
-				stream.SendAndClose(&pb.ImportServerResponse{})
+				stream.SendAndClose(result)
 				break
 			}
-			return err
+			return status.Error(codes.InvalidArgument, err.Error())
 		} else {
 			newF.Write(p.Chunk)
 		}
 	}
-
 	return nil
 }
+
 func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerRequest) (*pb.ListServersResponse, error) {
 	s.l.Log(
 		logger.INFO,
@@ -664,6 +700,36 @@ func ValidateListServerQuery(req *server.ListServerRequest) error {
 			*sort != server.TypeSort_DESC &&
 			*sort != server.TypeSort_NONE {
 			return fmt.Errorf("Invalid type order")
+		}
+	}
+	return nil
+}
+
+func ValidateServerFormMap(server map[string]interface{}) error {
+	keyValid := []string{"id", "name", "ipv4", "status"}
+	for k, v := range server {
+		switch k {
+		case keyValid[0]:
+			_, e := uuid.Parse(v.(string))
+			if e != nil {
+				return fmt.Errorf("Id:%v  not is uuid format ", v)
+			}
+		case keyValid[1]:
+		case keyValid[2]:
+			ip := net.ParseIP(v.(string))
+			if ip == nil {
+				return fmt.Errorf("IP address is not valid")
+			}
+
+			if ip.To4() == nil {
+				return fmt.Errorf("IP address is not v4")
+			}
+		case keyValid[3]:
+			if v.(string) != "on" && v.(string) != "off" {
+				return fmt.Errorf("Status is valid")
+			}
+		default:
+			return fmt.Errorf("Only accept key in %v", keyValid)
 		}
 	}
 	return nil

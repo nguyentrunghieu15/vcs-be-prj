@@ -119,34 +119,24 @@ func (s *AuthServer) RefreshToken(
 					"Action": "Ivoked Refresh Token",
 					"Token":  msg.GetRefreshToken(),
 					"Error":  err})
+			return nil, status.Error(codes.Aborted, err.Error())
 		}
-		return nil, nil
 	}
 
 	claims := s.Jwt.GetClaimsFromToken(msg.GetRefreshToken())
-	// Check exist user by email
-	user, err := s.UserRepo.FindOneByEmail(claims.Email)
-	if err != nil {
-		s.Logger.Log(
-			logger.INFO,
-			LogMessageAuth{"Action": "Ivoked Refresh Token",
-				"Token": msg.GetRefreshToken(),
-				"Error": err,
-			},
-		)
-		return nil, err
-	}
 
+	// Check exist user by email
+	user, _ := s.UserRepo.FindOneByEmail(claims.Email)
 	if user == nil {
 		s.Logger.Log(
 			logger.INFO,
 			LogMessageAuth{
 				"Action": "Ivoked Refresh Token",
 				"Token":  msg.GetRefreshToken(),
-				"Error":  err,
+				"Error":  "Not found record",
 			},
 		)
-		return nil, nil
+		return nil, status.Error(codes.NotFound, "Not found user")
 	}
 	// Create access token
 	accessToken, err := s.Jwt.GenerateAuthAccessToken(claims.Email, int64(user.ID), user.Roles)

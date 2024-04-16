@@ -4,10 +4,11 @@ go 1.21.6
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
-	github.com/nguyentrunghieu15/vcs-common-prj v0.0.23
+	github.com/nguyentrunghieu15/vcs-common-prj v0.1.2
 	github.com/xuri/excelize/v2 v2.8.1
 	golang.org/x/crypto v0.22.0
 	google.golang.org/grpc v1.62.1
@@ -16,7 +17,6 @@ require (
 
 require (
 	github.com/envoyproxy/protoc-gen-validate v1.0.4 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect

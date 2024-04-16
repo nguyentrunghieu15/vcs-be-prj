@@ -223,3 +223,69 @@ func ParseMapUpdateServerRequest(req *pb.UpdateServerRequest) (map[string]interf
 	}
 	return result, nil
 }
+
+func (s *ServerRepositoryDecorator) CheckServerExists(data map[string]interface{}) bool {
+	var count int64
+	result := s.db.Model(&model.Server{})
+	if id, ok := data["id"]; ok {
+		result = result.Where("id = ?", id)
+		if name, ok := data["name"]; ok {
+			result = result.Or("name = ?", name)
+		}
+	} else {
+		if name, ok := data["name"]; ok {
+			result = result.Where("name = ?", name)
+		}
+	}
+
+	result = result.Count(&count)
+	fmt.Println(count)
+	if result.Error != nil || count > 0 {
+		return true
+	}
+	return false
+}
+
+func ConvertServerModelMapToServerProto(server map[string]interface{}) *pb.Server {
+	// Convert the map to JSON
+	jsonData, _ := json.Marshal(server)
+	var structData model.Server
+	json.Unmarshal(jsonData, &structData)
+	return ConvertServerModelToServerProto(structData)
+}
+
+func ConvertListServerModelMapToListServerProto(s []map[string]interface{}) []*server.Server {
+	var result []*server.Server = make([]*server.Server, 0)
+	for _, v := range s {
+		result = append(result, ConvertServerModelMapToServerProto(v))
+	}
+	return result
+}
+
+func (s *ServerRepositoryDecorator) CreateBacth(userId uint64, data []map[string]interface{}) (*pb.ImportServerResponse, error) {
+	importServer := make([]map[string]interface{}, 0)
+	resImportServer := make([]map[string]interface{}, 0)
+	abortServer := make([]map[string]interface{}, 0)
+	for _, v := range data {
+		if s.CheckServerExists(v) {
+			abortServer = append(abortServer, v)
+		} else {
+			v["created_at"] = time.Now()
+			v["created_by"] = userId
+			importServer = append(importServer, v)
+			resImportServer = append(resImportServer, v)
+		}
+	}
+	if len(importServer) != 0 {
+		result := s.db.Model(&model.Server{}).Create(&importServer)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+	}
+	return &pb.ImportServerResponse{
+		NumServerImported: int64(len(resImportServer)),
+		ServerImported:    ConvertListServerModelMapToListServerProto(resImportServer),
+		NumServerFail:     int64(len(abortServer)),
+		ServerFail:        ConvertListServerModelMapToListServerProto(abortServer),
+	}, nil
+}
