@@ -100,7 +100,8 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 				"Detail": fmt.Errorf("Already Exists server name", req.GetName()),
 			},
 		)
-		return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("Already Exists server name", req.GetName()))
+		return nil, status.Error(codes.AlreadyExists,
+			fmt.Sprintf("Already Exists server name", req.GetName()))
 	}
 
 	// Parse data request
@@ -297,7 +298,31 @@ func (s *ServerService) DeleteServerByName(
 	return nil, nil
 }
 func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRequest) (*emptypb.Empty, error) {
-	// TO-DO code
+	s.l.Log(
+		logger.INFO,
+		LogMessageServer{
+			"Action": "Invoked Export server",
+		},
+	)
+	// Authorize
+
+	// TO-DO : Write codo to Authorize
+
+	//validate data
+	if err := req.Validate(); err != nil {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Export server",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	fmt.Println(req)
+
 	return nil, nil
 }
 func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerByIdRequest) (*pb.Server, error) {
