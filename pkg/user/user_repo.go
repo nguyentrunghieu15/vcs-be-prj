@@ -2,8 +2,9 @@ package user
 
 import (
 	"encoding/json"
-	"strings"
+	"fmt"
 
+	"github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	"github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"gorm.io/gorm"
@@ -28,30 +29,28 @@ func TypeSortToString(v model.TypeSort) string {
 	return ""
 }
 
-func (u *UserRepositoryDecorator) FindUsers(filter model.FilterQueryInterface) ([]model.User, error) {
+func (u *UserRepositoryDecorator) FindUsers(req *user.ListUsersRequest) ([]model.User, error) {
 	var user []model.User
-	var orderQuery string
-	offSet := filter.GetPage() * filter.GetPageSize()
-	if strings.Trim(filter.GetSortBy(), " ") == "" {
-		orderQuery = strings.Trim(filter.GetSortBy(), " ") + " " + TypeSortToString(filter.GetSort())
+	result := u.db
+	if req.GetPagination() != nil {
+		if limit := req.GetPagination().Limit; limit != nil && *limit > 1 {
+			result = result.Limit(int(*limit))
+		}
+		page := req.GetPagination().Page
+		pageSize := req.GetPagination().PageSize
+		if page != nil && pageSize != nil && *page > 0 && *pageSize > 0 {
+			result.Offset(int((*page - 1) * (*pageSize)))
+		}
+		if orderBy := req.GetPagination().SortBy; orderBy != nil {
+			if req.GetPagination().Sort != nil && req.GetPagination().Sort == server.TypeSort_DESC.Enum() {
+				result = result.Order(fmt.Sprintf("%v %v", orderBy, "DESC"))
+			} else {
+				result = result.Order(orderBy)
+			}
+
+		}
 	}
-
-	var result = u.db
-
-	if filter.GetLimit() != -1 {
-		result = result.Limit(int(filter.GetLimit()))
-	}
-
-	if filter.GetPage() != -1 && filter.GetPageSize() != -1 {
-		result = result.Offset(int(offSet))
-	}
-
-	if filter.GetSortBy() != "" {
-		result = result.Order(orderQuery)
-	}
-
 	result = result.Find(&user)
-
 	if result.Error != nil {
 		return nil, result.Error
 	}

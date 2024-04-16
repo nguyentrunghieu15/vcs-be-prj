@@ -60,28 +60,70 @@
         },
         "parameters": [
           {
-            "name": "filter.limit",
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.createdAtFrom",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.createdAtTo",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.updatedAtFrom",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.updatedAtTo",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter.status",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "STATUSNONE",
+              "ON",
+              "OFF"
+            ],
+            "default": "STATUSNONE"
+          },
+          {
+            "name": "pagination.limit",
             "in": "query",
             "required": false,
             "type": "string",
             "format": "int64"
           },
           {
-            "name": "filter.page",
+            "name": "pagination.page",
             "in": "query",
             "required": false,
             "type": "string",
             "format": "int64"
           },
           {
-            "name": "filter.pageSize",
+            "name": "pagination.pageSize",
             "in": "query",
             "required": false,
             "type": "string",
             "format": "int64"
           },
           {
-            "name": "filter.sort",
+            "name": "pagination.sort",
             "in": "query",
             "required": false,
             "type": "string",
@@ -93,7 +135,7 @@
             "default": "NONE"
           },
           {
-            "name": "filter.sortBy",
+            "name": "pagination.sortBy",
             "in": "query",
             "required": false,
             "type": "string"
@@ -376,70 +418,6 @@
         ]
       }
     },
-    "/api/v1/server/import": {
-      "post": {
-        "summary": "Import server",
-        "operationId": "ServerService_ImportServer",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ImportServerResponse"
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          },
-          "403": {
-            "description": "Forbidden, permission dennied",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          },
-          "500": {
-            "description": "Internal Server",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": " (streaming inputs)",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ImportServerRequest"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "ServerService"
-        ]
-      }
-    },
     "/api/v1/server/{id}": {
       "get": {
         "summary": "Get server by id",
@@ -675,39 +653,45 @@
     "ExportServerRequest": {
       "type": "object",
       "properties": {
+        "query": {
+          "type": "string"
+        },
         "filter": {
-          "$ref": "#/definitions/Filter"
+          "$ref": "#/definitions/FilterServer"
+        },
+        "pagination": {
+          "$ref": "#/definitions/Pagination"
+        },
+        "file": {
+          "$ref": "#/definitions/FileExport"
         }
       }
     },
-    "Filter": {
+    "FileExport": {
       "type": "object",
       "properties": {
-        "limit": {
-          "type": "string",
-          "format": "int64"
-        },
-        "page": {
-          "type": "string",
-          "format": "int64"
-        },
-        "pageSize": {
-          "type": "string",
-          "format": "int64"
-        },
-        "sort": {
-          "$ref": "#/definitions/TypeSort"
-        },
-        "sortBy": {
+        "fileName": {
           "type": "string"
         }
       }
     },
-    "ImportServerRequest": {
+    "FilterServer": {
       "type": "object",
       "properties": {
-        "server": {
-          "$ref": "#/definitions/Server"
+        "createdAtFrom": {
+          "type": "string"
+        },
+        "createdAtTo": {
+          "type": "string"
+        },
+        "updatedAtFrom": {
+          "type": "string"
+        },
+        "updatedAtTo": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/ServerStatus"
         }
       }
     },
@@ -748,6 +732,33 @@
             "$ref": "#/definitions/Server"
           },
           "description": "The field name should match the noun \"Server\" in the method name.\nThere will be a maximum number of items returned based on the page_size field in the request."
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "Pagination": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "string",
+          "format": "int64"
+        },
+        "pageSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sort": {
+          "$ref": "#/definitions/TypeSort"
+        },
+        "sortBy": {
+          "type": "string"
         }
       }
     },

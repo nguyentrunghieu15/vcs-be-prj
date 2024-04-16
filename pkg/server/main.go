@@ -3,15 +3,18 @@ package server
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"os"
 
+	"github.com/google/uuid"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
-	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	pb "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
+	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -41,7 +44,7 @@ func NewServerService() *ServerService {
 			Dsn:     dsnPostgres,
 		})
 	if err != nil {
-		log.Fatalf("AuthService : Can't connect to PostgresSQL Database :%v", err)
+		log.Fatalf("Server service : Can't connect to PostgresSQL Database :%v", err)
 	}
 	log.Println("Connected database")
 	connPostgres, _ := postgres.(*gorm.DB)
@@ -171,7 +174,8 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 	}
 
 	// check server already exsits
-	_, err := s.ServerRepo.FindOneById(int(req.GetId()))
+	id, _ := uuid.Parse(req.GetId())
+	_, err := s.ServerRepo.FindOneById(id)
 	if err != nil {
 		s.l.Log(
 			logger.ERROR,
@@ -197,11 +201,11 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if v, ok := header["id"]; ok {
-		s.ServerRepo.UpdateOneById(int(req.GetId()), map[string]interface{}{"DeletedBy": v[0]})
+		s.ServerRepo.UpdateOneById(id, map[string]interface{}{"DeletedBy": v[0]})
 	}
 
 	// Delete server
-	err = s.ServerRepo.DeleteOneById(int(req.GetId()))
+	err = s.ServerRepo.DeleteOneById(id)
 	if err != nil {
 		s.l.Log(
 			logger.ERROR,
@@ -319,7 +323,8 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 	}
 
 	// Get Server
-	server, err := s.ServerRepo.FindOneById(int(req.GetId()))
+	id, _ := uuid.Parse(req.GetId())
+	server, err := s.ServerRepo.FindOneById(id)
 	if err != nil {
 		s.l.Log(
 			logger.ERROR,
@@ -375,8 +380,83 @@ func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerBy
 
 	return ConvertServerModelToServerProto(*server), nil
 }
-func (s *ServerService) ImportServer(pb.ServerService_ImportServerServer) error {
+func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer) error {
 	// TO-DO code
+	// Read metadata from client.
+	md, ok := metadata.FromIncomingContext(stream.Context())
+	if !ok {
+		return status.Errorf(codes.DataLoss, "ClientStreamingEcho: failed to get metadata")
+	}
+
+	fileName, _ := md["filename"]
+	user, _ := md["user"]
+
+	filePath := fmt.Sprintf("%v/%v_%v", env.GetEnv("SERVER_UPLOAD_FOLDER"), user[0], fileName[0])
+	newF, err := os.OpenFile(
+		filePath,
+		os.O_WRONLY|os.O_CREATE|os.O_APPEND,
+		0666,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer newF.Close()
+
+	for {
+		p, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+
+				newF.Close()
+
+				f, err := excelize.OpenFile(filePath)
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+				defer func() {
+					// Close the spreadsheet.
+					if err := f.Close(); err != nil {
+						fmt.Println(err)
+					}
+				}()
+
+				rows, err := f.GetRows("Sheet1")
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+
+				listServer := make([]map[string]interface{}, 0)
+
+				fieldName := rows[0]
+				for _, v := range fieldName {
+					if v != "id" && v != "name" && v != "ipv4" && v != "status" {
+						return fmt.Errorf("Invalid field name")
+					}
+				}
+
+				for _, row := range rows[1:] {
+					server := make(map[string]interface{})
+					for idx, colCell := range row {
+						server[fieldName[idx]] = colCell
+					}
+					listServer = append(listServer, server)
+				}
+
+				fmt.Println(listServer)
+
+				stream.SendAndClose(&pb.ImportServerResponse{})
+				break
+			}
+			return err
+		} else {
+			newF.Write(p.Chunk)
+		}
+	}
+
 	return nil
 }
 func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerRequest) (*pb.ListServersResponse, error) {
@@ -390,12 +470,25 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 
 	// TO-DO : Write codo to Authorize
 
+	fmt.Println(req)
 	//validate data
 	if err := req.Validate(); err != nil {
+
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
-				"Action": "List User",
+				"Action": "List server",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if err := ValidateListServerQuery(req); err != nil {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "List server",
 				"Error":  "Invalid data in request",
 				"Detail": err,
 			},
@@ -404,7 +497,7 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 	}
 
 	// Get server
-	servers, err := s.ServerRepo.FindServers(&user.FilterAdapter{Filter: req.GetFilter()})
+	servers, err := s.ServerRepo.FindServers(req)
 	if err != nil {
 		s.l.Log(
 			logger.ERROR,
@@ -415,7 +508,19 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &pb.ListServersResponse{Servers: ConvertListServerModelToListServerProto(servers)}, nil
+	total, err := s.ServerRepo.CountServers(req.Query, req.GetFilter())
+	if err != nil {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "List server",
+				"Error":  err,
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.ListServersResponse{Servers: ConvertListServerModelToListServerProto(servers), Total: total}, nil
 }
 func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest) (*pb.Server, error) {
 	s.l.Log(
@@ -442,9 +547,11 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	id, _ := uuid.Parse(req.GetId())
+
 	// check already exists server
 	if existsServer, _ := s.ServerRepo.FindOneByName(req.GetName()); existsServer != nil &&
-		existsServer.ID != uint(req.GetId()) {
+		existsServer.ID != id {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -490,7 +597,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 	}
 
 	// update server
-	updatedServer, err := s.ServerRepo.UpdateOneById(int(req.GetId()), server)
+	updatedServer, err := s.ServerRepo.UpdateOneById(id, server)
 	if err != nil {
 		s.l.Log(
 			logger.ERROR,
@@ -519,7 +626,7 @@ func ConvertStatusServerModelToStatusServerProto(server model.ServerStatus) pb.S
 
 func ConvertServerModelToServerProto(server model.Server) *pb.Server {
 	return &pb.Server{
-		Id:        int64(server.ID),
+		Id:        server.ID.String(),
 		CreatedAt: server.CreatedAt.String(),
 		CreatedBy: int64(server.CreatedBy),
 		UpdatedAt: server.UpdatedAt.String(),
@@ -536,4 +643,28 @@ func ConvertListServerModelToListServerProto(s []model.Server) []*server.Server 
 		result = append(result, ConvertServerModelToServerProto(v))
 	}
 	return result
+}
+
+func ValidateListServerQuery(req *server.ListServerRequest) error {
+	if req.GetPagination() != nil {
+		if limit := req.GetPagination().Limit; limit != nil && *limit < 1 {
+			return fmt.Errorf("Limit must be a positive number")
+		}
+
+		if page := req.GetPagination().Page; page != nil && *page < 1 {
+			return fmt.Errorf("Page must be a positive number")
+		}
+
+		if pageSize := req.GetPagination().PageSize; pageSize != nil && *pageSize < 1 {
+			return fmt.Errorf("Page size must be a positive number")
+		}
+
+		if sort := req.GetPagination().Sort; sort != nil &&
+			*sort != server.TypeSort_ASC &&
+			*sort != server.TypeSort_DESC &&
+			*sort != server.TypeSort_NONE {
+			return fmt.Errorf("Invalid type order")
+		}
+	}
+	return nil
 }

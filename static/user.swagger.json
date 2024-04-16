@@ -60,28 +60,28 @@
         },
         "parameters": [
           {
-            "name": "filter.limit",
+            "name": "pagination.limit",
             "in": "query",
             "required": false,
             "type": "string",
             "format": "int64"
           },
           {
-            "name": "filter.page",
+            "name": "pagination.page",
             "in": "query",
             "required": false,
             "type": "string",
             "format": "int64"
           },
           {
-            "name": "filter.pageSize",
+            "name": "pagination.pageSize",
             "in": "query",
             "required": false,
             "type": "string",
             "format": "int64"
           },
           {
-            "name": "filter.sort",
+            "name": "pagination.sort",
             "in": "query",
             "required": false,
             "type": "string",
@@ -93,7 +93,7 @@
             "default": "NONE"
           },
           {
-            "name": "filter.sortBy",
+            "name": "pagination.sortBy",
             "in": "query",
             "required": false,
             "type": "string"
@@ -164,6 +164,73 @@
             "schema": {
               "$ref": "#/definitions/CreateUserRequest"
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/api/v1/user/email/{email}": {
+      "get": {
+        "summary": "Get user by email",
+        "operationId": "UserService_GetUserByEmail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden, permission dennied",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "type": "string"
           },
           {
             "name": "Authorization",
@@ -503,7 +570,19 @@
         "password"
       ]
     },
-    "Filter": {
+    "ListUsersResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/User"
+          }
+        }
+      }
+    },
+    "Pagination": {
       "type": "object",
       "properties": {
         "limit": {
@@ -523,18 +602,6 @@
         },
         "sortBy": {
           "type": "string"
-        }
-      }
-    },
-    "ListUsersResponse": {
-      "type": "object",
-      "properties": {
-        "users": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/User"
-          }
         }
       }
     },

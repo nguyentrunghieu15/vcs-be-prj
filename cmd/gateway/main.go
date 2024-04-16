@@ -12,6 +12,7 @@ import (
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	gateway_middleware "github.com/nguyentrunghieu15/vcs-be-prj/pkg/gateway/middleware"
+	serverservice "github.com/nguyentrunghieu15/vcs-be-prj/pkg/gateway/server_service"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
 	authpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/auth"
 	serverpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
@@ -99,6 +100,8 @@ func main() {
 		"POSTGRES_PASSWORD": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_DATABASE": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
+
+		"GATEWAY_UPLOAD_FOLDER": {IsRequire: true, Type: env.STRING},
 	}
 	env.Load(".env", gatewayConfigEnv)
 	e := echo.New()
@@ -158,6 +161,16 @@ func main() {
 		gateway_middleware.UseJwtMiddleware(),
 		gateway_middleware.UserParseJWTTokenMiddleware(),
 	)
+
+	importServerService, err := serverservice.NewServerService(context.Background(),
+		fmt.Sprintf("%v:%v", env.GetEnv("SERVER_ADDRESS"), env.GetEnv("SERVER_PORT")),
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+	if err != nil {
+		e.Logger.Fatal("Error when active feature import file")
+	}
+	e.POST("/api/v1/server/import", importServerService.Import,
+		gateway_middleware.UseJwtMiddleware(),
+		gateway_middleware.UserParseJWTTokenMiddleware())
 
 	err = serverpb.RegisterServerServiceHandlerFromEndpoint(
 		context.Background(),
