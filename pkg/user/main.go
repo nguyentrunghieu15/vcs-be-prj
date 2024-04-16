@@ -134,9 +134,20 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 		)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	if err := ValidateListUserQuery(req); err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "List User",
+				"Error":  "Invalid data in request",
+				"Detail": err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// Get user
-	users, err := u.UserRepo.FindUsers(&FilterAdapter{Filter: req.GetFilter()})
+	users, err := u.UserRepo.FindUsers(req)
 	if err != nil {
 		u.l.Log(
 			logger.ERROR,
@@ -450,69 +461,6 @@ func NewUserServer() *UserServer {
 	}
 }
 
-type FilterAdapter struct {
-	Filter *server.Filter
-}
-
-// GetLimit implements model.FilterQueryInterface.
-func (f *FilterAdapter) GetLimit() int64 {
-	if f.Filter == nil {
-		return -1
-	}
-	if f.Filter.Limit == nil {
-		return -1
-	}
-	return f.Filter.GetLimit()
-}
-
-// GetPage implements model.FilterQueryInterface.
-func (f *FilterAdapter) GetPage() int64 {
-	if f.Filter == nil {
-		return -1
-	}
-	if f.Filter.Page == nil {
-		return -1
-	}
-	return f.Filter.GetPage()
-}
-
-// GetPageSize implements model.FilterQueryInterface.
-func (f *FilterAdapter) GetPageSize() int64 {
-	if f.Filter == nil {
-		return -1
-	}
-	if f.Filter.PageSize == nil {
-		return -1
-	}
-	return f.Filter.GetPageSize()
-}
-
-// GetSort implements model.FilterQueryInterface.
-func (f *FilterAdapter) GetSort() model.TypeSort {
-	if f.Filter == nil {
-		return model.NONE
-	}
-	switch f.Filter.GetSort() {
-	case server.TypeSort_ASC:
-		return model.ASC
-	case server.TypeSort_DESC:
-		return model.DESC
-	default:
-		return model.NONE
-	}
-}
-
-// GetSortBy implements model.FilterQueryInterface.
-func (f *FilterAdapter) GetSortBy() string {
-	if f.Filter == nil {
-		return ""
-	}
-	if f.Filter.SortBy == nil {
-		return ""
-	}
-	return f.Filter.GetSortBy()
-}
-
 func ConvertUserRoleModelToUserRoleProto(role model.UserRole) user.UserRole {
 	switch role {
 	case model.RoleAdmin:
@@ -560,3 +508,27 @@ func ConvertListUserModelToListUserProto(u []model.User) []*user.User {
 }
 
 type LogMessageUser map[string]interface{}
+
+func ValidateListUserQuery(req *user.ListUsersRequest) error {
+	if req.GetPagination() != nil {
+		if limit := req.GetPagination().Limit; limit != nil && *limit < 1 {
+			return fmt.Errorf("Limit must be a positive number")
+		}
+
+		if page := req.GetPagination().Page; page != nil && *page < 1 {
+			return fmt.Errorf("Page must be a positive number")
+		}
+
+		if pageSize := req.GetPagination().PageSize; pageSize != nil && *pageSize < 1 {
+			return fmt.Errorf("Page size must be a positive number")
+		}
+
+		if sort := req.GetPagination().Sort; sort != nil &&
+			*sort != server.TypeSort_ASC &&
+			*sort != server.TypeSort_DESC &&
+			*sort != server.TypeSort_NONE {
+			return fmt.Errorf("Invalid type order")
+		}
+	}
+	return nil
+}

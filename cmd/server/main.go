@@ -27,6 +27,8 @@ func main() {
 		"POSTGRES_PASSWORD": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_DATABASE": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
+
+		"SERVER_UPLOAD_FOLDER": {IsRequire: true, Type: env.STRING},
 	}
 
 	env.Load(".env", serverEnv)
