@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"os"
 	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
-	"github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	pb "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
-	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
+	"github.com/segmentio/kafka-go"
 	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -25,13 +23,41 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
+type LogMessageServer map[string]interface{}
+
 type ServerService struct {
 	pb.ServerServiceServer
 	l          *logger.LoggerDecorator
 	ServerRepo *ServerRepositoryDecorator
+	kafka      ProducerClientInterface
+}
+
+type ServerServiceKafkaLogger struct {
+	l *logger.LoggerDecorator
+}
+
+func (s *ServerServiceKafkaLogger) Printf(msg string, a ...interface{}) {
+	s.l.Log(logger.INFO, LogMessageServer{
+		"Kafka Log": "Infor",
+		"Message":   msg,
+		"Details":   a,
+	})
+}
+
+type ServerServiceKafkaLoggerError struct {
+	l *logger.LoggerDecorator
+}
+
+func (s *ServerServiceKafkaLoggerError) Printf(msg string, a ...interface{}) {
+	s.l.Log(logger.ERROR, LogMessageServer{
+		"Kafka Log": "Error",
+		"Message":   msg,
+		"Details":   a,
+	})
 }
 
 func NewServerService() *ServerService {
+
 	dsnPostgres := fmt.Sprintf(
 		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v",
 		env.GetEnv("POSTGRES_ADDRESS"),
@@ -58,13 +84,20 @@ func NewServerService() *ServerService {
 		PathToLog:       env.GetEnv("SERVER_LOG_PATH").(string),
 		FileNameLogBase: env.GetEnv("SERVER_NAME_FILE_LOG").(string),
 	}
+
+	newKafka := NewProducer(ConfigProducer{
+		Broker:     []string{env.GetEnv("KAFKA_BOOTSTRAP_SERVER").(string)},
+		Topic:      env.GetEnv("KAFKA_TOPIC_EXPORT").(string),
+		Balancer:   &kafka.LeastBytes{},
+		Logger:     &ServerServiceKafkaLogger{l: newLogger},
+		ErrorLoger: &ServerServiceKafkaLoggerError{l: newLogger},
+	})
 	return &ServerService{
 		ServerRepo: NewServerRepository(connPostgres),
 		l:          newLogger,
+		kafka:      newKafka,
 	}
 }
-
-type LogMessageServer map[string]interface{}
 
 func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.Server, error) {
 	s.l.Log(
@@ -321,10 +354,21 @@ func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	fmt.Println(req)
+	//Parse to kafka message
+	parseMessage, err := ParseExportRequestToKafkaMessage(req)
+	if err != nil {
+		s.l.Log(logger.ERROR, LogMessageServer{
+			"Action": "Export",
+			"Error":  err,
+		})
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
+	// Write to kafka
+	s.kafka.WriteMessage(context.Background(), *parseMessage)
 	return nil, nil
 }
+
 func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerByIdRequest) (*pb.Server, error) {
 	s.l.Log(
 		logger.INFO,
@@ -647,90 +691,4 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return ConvertServerModelToServerProto(*updatedServer), nil
-}
-
-func ConvertStatusServerModelToStatusServerProto(server model.ServerStatus) pb.ServerStatus {
-	switch server {
-	case model.On:
-		return pb.ServerStatus_ON
-	case model.Off:
-		return pb.ServerStatus_OFF
-	default:
-		return pb.ServerStatus_STATUSNONE
-	}
-}
-
-func ConvertServerModelToServerProto(server model.Server) *pb.Server {
-	return &pb.Server{
-		Id:        server.ID.String(),
-		CreatedAt: server.CreatedAt.String(),
-		CreatedBy: int64(server.CreatedBy),
-		UpdatedAt: server.UpdatedAt.String(),
-		UpdatedBy: int64(server.UpdatedBy),
-		Name:      server.Name,
-		Status:    ConvertStatusServerModelToStatusServerProto(server.Status),
-		Ipv4:      server.Ipv4,
-	}
-}
-
-func ConvertListServerModelToListServerProto(s []model.Server) []*server.Server {
-	var result []*server.Server = make([]*server.Server, 0)
-	for _, v := range s {
-		result = append(result, ConvertServerModelToServerProto(v))
-	}
-	return result
-}
-
-func ValidateListServerQuery(req *server.ListServerRequest) error {
-	if req.GetPagination() != nil {
-		if limit := req.GetPagination().Limit; limit != nil && *limit < 1 {
-			return fmt.Errorf("Limit must be a positive number")
-		}
-
-		if page := req.GetPagination().Page; page != nil && *page < 1 {
-			return fmt.Errorf("Page must be a positive number")
-		}
-
-		if pageSize := req.GetPagination().PageSize; pageSize != nil && *pageSize < 1 {
-			return fmt.Errorf("Page size must be a positive number")
-		}
-
-		if sort := req.GetPagination().Sort; sort != nil &&
-			*sort != server.TypeSort_ASC &&
-			*sort != server.TypeSort_DESC &&
-			*sort != server.TypeSort_NONE {
-			return fmt.Errorf("Invalid type order")
-		}
-	}
-	return nil
-}
-
-func ValidateServerFormMap(server map[string]interface{}) error {
-	keyValid := []string{"id", "name", "ipv4", "status"}
-	for k, v := range server {
-		switch k {
-		case keyValid[0]:
-			_, e := uuid.Parse(v.(string))
-			if e != nil {
-				return fmt.Errorf("Id:%v  not is uuid format ", v)
-			}
-		case keyValid[1]:
-		case keyValid[2]:
-			ip := net.ParseIP(v.(string))
-			if ip == nil {
-				return fmt.Errorf("IP address is not valid")
-			}
-
-			if ip.To4() == nil {
-				return fmt.Errorf("IP address is not v4")
-			}
-		case keyValid[3]:
-			if v.(string) != "on" && v.(string) != "off" {
-				return fmt.Errorf("Status is valid")
-			}
-		default:
-			return fmt.Errorf("Only accept key in %v", keyValid)
-		}
-	}
-	return nil
 }

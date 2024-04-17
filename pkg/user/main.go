@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 type UserServer struct {
@@ -447,7 +448,7 @@ func NewUserServer() *UserServer {
 	}
 	log.Println("Connected database")
 	connPostgres, _ := postgres.(*gorm.DB)
-	// connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
+	connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Info)
 	newLogger := logger.NewLogger()
 	newLogger.Config = logger.LoggerConfig{
 		IsLogRotate:     true,

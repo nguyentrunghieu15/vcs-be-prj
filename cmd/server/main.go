@@ -29,6 +29,10 @@ func main() {
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
 
 		"SERVER_UPLOAD_FOLDER": {IsRequire: true, Type: env.STRING},
+
+		"KAFKA_BOOTSTRAP_SERVER": {IsRequire: true, Type: env.STRING},
+		"KAFKA_GROUP_ID":         {IsRequire: true, Type: env.STRING},
+		"KAFKA_TOPIC_EXPORT":     {IsRequire: true, Type: env.STRING},
 	}
 
 	env.Load(".env", serverEnv)
