@@ -33,6 +33,11 @@ func main() {
 		"KAFKA_BOOTSTRAP_SERVER": {IsRequire: true, Type: env.STRING},
 		"KAFKA_GROUP_ID":         {IsRequire: true, Type: env.STRING},
 		"KAFKA_TOPIC_EXPORT":     {IsRequire: true, Type: env.STRING},
+
+		"REDIS_HOST":     {IsRequire: true, Type: env.STRING},
+		"REDIS_PORT":     {IsRequire: true, Type: env.STRING},
+		"REDIS_USERNAME": {IsRequire: true, Type: env.STRING},
+		"REDIS_PASSWORD": {IsRequire: true, Type: env.STRING},
 	}
 
 	env.Load(".env", serverEnv)

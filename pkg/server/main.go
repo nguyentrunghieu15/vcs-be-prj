@@ -11,8 +11,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
+	gedis "github.com/nguyentrunghieu15/vcs-be-prj/pkg/redis"
 	pb "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
+	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"github.com/segmentio/kafka-go"
 	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc/codes"
@@ -25,10 +27,24 @@ import (
 
 type LogMessageServer map[string]interface{}
 
+type ServerRepo interface {
+	CheckServerExists(map[string]interface{}) bool
+	CountServers(*string, *pb.FilterServer) (int64, error)
+	CreateBacth(uint64, []map[string]interface{}) (*pb.ImportServerResponse, error)
+	CreateServer(map[string]interface{}) (*model.Server, error)
+	DeleteOneById(uuid.UUID) error
+	DeleteOneByName(string) error
+	FindOneById(uuid.UUID) (*model.Server, error)
+	FindOneByName(string) (*model.Server, error)
+	FindServers(*pb.ListServerRequest) ([]model.Server, error)
+	UpdateOneById(uuid.UUID, map[string]interface{}) (*model.Server, error)
+	UpdateOneByName(string, map[string]interface{}) (*model.Server, error)
+}
+
 type ServerService struct {
 	pb.ServerServiceServer
 	l          *logger.LoggerDecorator
-	ServerRepo *ServerRepositoryDecorator
+	ServerRepo ServerRepo
 	kafka      ProducerClientInterface
 }
 
@@ -92,8 +108,15 @@ func NewServerService() *ServerService {
 		Logger:     &ServerServiceKafkaLogger{l: newLogger},
 		ErrorLoger: &ServerServiceKafkaLoggerError{l: newLogger},
 	})
+
+	newRedisConfig := gedis.GedisConfig{
+		Addess:   fmt.Sprintf("%v:%v", env.GetEnv("REDIS_HOST"), env.GetEnv("REDIS_PORT")),
+		Password: env.GetEnv("REDIS_PASSWORD").(string),
+		Username: env.GetEnv("REDIS_USERNAME").(string),
+	}
+
 	return &ServerService{
-		ServerRepo: NewServerRepository(connPostgres),
+		ServerRepo: NewServerRepoProxy(newRedisConfig, connPostgres),
 		l:          newLogger,
 		kafka:      newKafka,
 	}
