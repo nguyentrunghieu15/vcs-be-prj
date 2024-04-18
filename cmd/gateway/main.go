@@ -102,6 +102,9 @@ func main() {
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
 
 		"GATEWAY_UPLOAD_FOLDER": {IsRequire: true, Type: env.STRING},
+
+		"FILE_SERVER_ADDRESS": {IsRequire: true, Type: env.STRING},
+		"FILE_SERVER_PORT":    {IsRequire: true, Type: env.STRING},
 	}
 	env.Load(".env", gatewayConfigEnv)
 	e := echo.New()
@@ -187,6 +190,20 @@ func main() {
 		gateway_middleware.UseJwtMiddleware(),
 		gateway_middleware.UserParseJWTTokenMiddleware(),
 	)
+
+	exportService, err := serverservice.NewServerStogareService(context.Background(),
+		fmt.Sprintf("%v:%v", env.GetEnv("FILE_SERVER_ADDRESS"), env.GetEnv("FILE_SERVER_PORT")),
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+	if err != nil {
+		e.Logger.Fatal("Error when active feature export file")
+	}
+
+	r := e.Group("/api/v1/file", gateway_middleware.UseJwtMiddleware(),
+		gateway_middleware.UserParseJWTTokenMiddleware())
+	{
+		r.GET("/download", exportService.Export)
+		r.GET("/user/:id", exportService.GetAllFileOfUser)
+	}
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%v:%v", env.GetEnv("GATEWAY_ADDRESS"), env.GetEnv("GATEWAY_PORT"))))
 }

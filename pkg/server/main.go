@@ -388,7 +388,10 @@ func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRe
 	}
 
 	// Write to kafka
-	s.kafka.WriteMessage(context.Background(), *parseMessage)
+	err = s.kafka.WriteMessage(context.Background(), *parseMessage)
+	if err != nil {
+		return nil, status.Error(codes.Aborted, "Can't export")
+	}
 	return nil, nil
 }
 

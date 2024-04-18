@@ -650,17 +650,18 @@
     "ExportServerRequest": {
       "type": "object",
       "properties": {
-        "query": {
-          "type": "string"
+        "userId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "file": {
+          "$ref": "#/definitions/FileExport"
         },
         "filter": {
           "$ref": "#/definitions/FilterServer"
         },
         "pagination": {
-          "$ref": "#/definitions/Pagination"
-        },
-        "file": {
-          "$ref": "#/definitions/FileExport"
+          "$ref": "#/definitions/PaginationExportRequest"
         }
       }
     },
@@ -670,7 +671,10 @@
         "fileName": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "fileName"
+      ]
     },
     "FilterServer": {
       "type": "object",
@@ -748,6 +752,29 @@
           "format": "int64"
         },
         "pageSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sort": {
+          "$ref": "#/definitions/TypeSort"
+        },
+        "sortBy": {
+          "type": "string"
+        }
+      }
+    },
+    "PaginationExportRequest": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "string",
+          "format": "int64"
+        },
+        "fromPage": {
+          "type": "string",
+          "format": "int64"
+        },
+        "toPage": {
           "type": "string",
           "format": "int64"
         },
