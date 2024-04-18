@@ -508,19 +508,40 @@ func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer)
 
 				f, err := excelize.OpenFile(filePath)
 				if err != nil {
-					fmt.Println(err)
+					s.l.Log(
+						logger.ERROR,
+						LogMessageServer{
+							"Acction": "Import Server",
+							"Error":   "Open file excel",
+							"Detail":  err,
+						},
+					)
 					return status.Error(codes.Internal, err.Error())
 				}
 				defer func() {
 					// Close the spreadsheet.
 					if err := f.Close(); err != nil {
-						fmt.Println(err)
+						s.l.Log(
+							logger.ERROR,
+							LogMessageServer{
+								"Acction": "Import Server",
+								"Error":   "Close file excel",
+								"Detail":  err,
+							},
+						)
 					}
 				}()
 
 				rows, err := f.GetRows("Sheet1")
 				if err != nil {
-					fmt.Println(err)
+					s.l.Log(
+						logger.ERROR,
+						LogMessageServer{
+							"Acction": "Import Server",
+							"Error":   "Read file excel",
+							"Detail":  err,
+						},
+					)
 					return status.Error(codes.Internal, err.Error())
 				}
 
@@ -573,7 +594,6 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 
 	// TO-DO : Write codo to Authorize
 
-	fmt.Println(req)
 	//validate data
 	if err := req.Validate(); err != nil {
 

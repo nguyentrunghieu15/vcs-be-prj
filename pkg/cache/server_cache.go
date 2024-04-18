@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	gRedis "github.com/nguyentrunghieu15/vcs-be-prj/pkg/redis"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -34,7 +33,7 @@ func (s *ServerCache) CacheListServerWithKey(key string, servers []model.Server)
 		result := s.gedis.Set(
 			fmt.Sprintf("%v:hash:%v:serverId:%v", s.prefix, key, server.ID),
 			s.convertServerToMapRedis(server))
-		if result.Err() != redis.Nil {
+		if result.Err() != nil {
 			s.gedis.DelKeyWithPattern(fmt.Sprintf("%v:hash:%v:serverId:*", s.prefix, key))
 			return result.Err()
 		}
@@ -44,7 +43,7 @@ func (s *ServerCache) CacheListServerWithKey(key string, servers []model.Server)
 
 func (s *ServerCache) DelKey(key string) error {
 	result := s.gedis.DelKeyWithPattern(fmt.Sprintf("%v:hash:%v:serverId:*", s.prefix, key))
-	if result.Err() != redis.Nil {
+	if result.Err() != nil {
 		return result.Err()
 	}
 	return nil
@@ -52,7 +51,7 @@ func (s *ServerCache) DelKey(key string) error {
 
 func (s *ServerCache) DelKeyContainServerID(serverId string) error {
 	result := s.gedis.DelKeyWithPattern(fmt.Sprintf("%v:hash:*:serverId:%v", s.prefix, serverId))
-	if result.Err() != redis.Nil {
+	if result.Err() != nil {
 		return result.Err()
 	}
 	return nil
@@ -63,7 +62,7 @@ func (s *ServerCache) UpdateOneServerForAllKey(server model.Server) error {
 		fmt.Sprintf("%v:hash:*:serverId:%v", s.prefix, server.ID.String()))
 	for _, v := range allKeys {
 		result := s.gedis.Set(v, s.convertServerToMapRedis(server))
-		if result.Err() != redis.Nil {
+		if result.Err() != nil {
 			return result.Err()
 		}
 	}
@@ -75,7 +74,7 @@ func (s *ServerCache) GetListServerWithKey(key string) ([]model.Server, error) {
 	allKeys := s.gedis.GetAllKeyWithPattern(fmt.Sprintf("%v:hash:%v:serverId:*", s.prefix, key))
 	for _, v := range allKeys {
 		server := s.gedis.Get(v)
-		if server.Err() != redis.Nil {
+		if server.Err() != nil {
 			return []model.Server{}, server.Err()
 		}
 		result = append(result, s.convertMapRedisToServerModel(server.Val()))

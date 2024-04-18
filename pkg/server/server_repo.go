@@ -146,9 +146,9 @@ func (s *ServerRepositoryDecorator) FindServers(req *server.ListServerRequest) (
 		}
 		if orderBy := req.GetPagination().SortBy; orderBy != nil {
 			if req.GetPagination().Sort != nil && req.GetPagination().Sort == pb.TypeSort_DESC.Enum() {
-				result = result.Order(fmt.Sprintf("%v %v", orderBy, "DESC"))
+				result = result.Order(fmt.Sprintf("%v %v", *orderBy, "DESC"))
 			} else {
-				result = result.Order(orderBy)
+				result = result.Order(*orderBy)
 			}
 		}
 	}
@@ -239,7 +239,6 @@ func (s *ServerRepositoryDecorator) CheckServerExists(data map[string]interface{
 	}
 
 	result = result.Count(&count)
-	fmt.Println(count)
 	if result.Error != nil || count > 0 {
 		return true
 	}
@@ -262,7 +261,10 @@ func ConvertListServerModelMapToListServerProto(s []map[string]interface{}) []*s
 	return result
 }
 
-func (s *ServerRepositoryDecorator) CreateBacth(userId uint64, data []map[string]interface{}) (*pb.ImportServerResponse, error) {
+func (s *ServerRepositoryDecorator) CreateBacth(
+	userId uint64,
+	data []map[string]interface{},
+) (*pb.ImportServerResponse, error) {
 	importServer := make([]map[string]interface{}, 0)
 	resImportServer := make([]map[string]interface{}, 0)
 	abortServer := make([]map[string]interface{}, 0)

@@ -67,6 +67,8 @@ github.com/nguyentrunghieu15/vcs-common-prj v0.1.2 h1:XnhpMZSR6IxMlvIzs6uNoXRcX5
 github.com/nguyentrunghieu15/vcs-common-prj v0.1.2/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
 github.com/nguyentrunghieu15/vcs-common-prj v0.1.3 h1:PfARch7Vs95IBIi9ByGwYdCkOcXpsl0iGoN0hQFlkps=
 github.com/nguyentrunghieu15/vcs-common-prj v0.1.3/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
+github.com/nguyentrunghieu15/vcs-common-prj v0.1.5 h1:WH1rVwLE1E63R9CQKTmF3daGtcu19PCQZCvbWuWon+8=
+github.com/nguyentrunghieu15/vcs-common-prj v0.1.5/go.mod h1:sTRluvsfe4fmgqSpSv4Ix8Cof5d4DfHPyjmqWhUhKn0=
 github.com/pierrec/lz4/v4 v4.1.15 h1:MO0/ucJhngq7299dKLwIMtgTfbkoSPF6AoMYDd8Q4q0=
 github.com/pierrec/lz4/v4 v4.1.15/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
