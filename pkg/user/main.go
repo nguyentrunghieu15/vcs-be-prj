@@ -22,9 +22,10 @@ import (
 
 type UserServer struct {
 	user.UserServiceServer
-	UserRepo *UserRepositoryDecorator
-	l        *logger.LoggerDecorator
-	bcrypt   *auth.BcryptService
+	UserRepo  *UserRepositoryDecorator
+	l         *logger.LoggerDecorator
+	bcrypt    *auth.BcryptService
+	authorize *auth.Authorizer
 }
 
 // GetUser implements user.UserServiceServer.
@@ -38,6 +39,41 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 	)
 
 	// Authorize
+
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !u.authorize.HavePermisionToViewUser(model.UserRole(role[0])) {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get user",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't get user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -80,6 +116,40 @@ func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmail
 	)
 
 	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !u.authorize.HavePermisionToViewUser(model.UserRole(role[0])) {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get user",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't get user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -120,6 +190,41 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 		},
 	)
 	// Authorize
+
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create get user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "List user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !u.authorize.HavePermisionToViewUser(model.UserRole(role[0])) {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "List user",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't get user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -172,6 +277,41 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 		},
 	)
 	// Authorize
+
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create  user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !u.authorize.HavePermisionToCreateUser(model.UserRole(role[0])) {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create user",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't create user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -233,19 +373,6 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 	}
 	user["Password"] = hashedPassword
 
-	// Get header
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Create User",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	if v, ok := header["id"]; ok {
 		user["CreatedBy"] = v[0]
 	}
@@ -275,6 +402,41 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 		},
 	)
 	// Authorize
+
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Update user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Update user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !u.authorize.HavePermisionToUpdateUser(model.UserRole(role[0])) {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Update user",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't update user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -318,19 +480,6 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// Get header
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Update User",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	if v, ok := header["id"]; ok {
 		user["UpdatedBy"] = v[0]
 	}
@@ -362,6 +511,41 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 	)
 	// Authorize
 
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Create get user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Delete user",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !u.authorize.HavePermisionToDeleteUser(model.UserRole(role[0])) {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Delete user",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't delete user")
+	}
+
 	// TO-DO : Write codo to Authorize
 
 	//validate data
@@ -391,18 +575,6 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	// Get header
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Update User",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	if v, ok := header["id"]; ok {
 		u.UserRepo.UpdateOneById(int(req.GetId()), map[string]interface{}{"DeletedBy": v[0]})
 	}
@@ -456,9 +628,10 @@ func NewUserServer() *UserServer {
 		FileNameLogBase: env.GetEnv("USER_NAME_FILE_LOG").(string),
 	}
 	return &UserServer{
-		UserRepo: NewUserRepository(connPostgres),
-		l:        newLogger,
-		bcrypt:   &auth.BcryptService{},
+		UserRepo:  NewUserRepository(connPostgres),
+		l:         newLogger,
+		bcrypt:    &auth.BcryptService{},
+		authorize: &auth.Authorizer{},
 	}
 }
 

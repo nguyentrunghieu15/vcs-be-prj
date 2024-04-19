@@ -66,6 +66,12 @@
             "schema": {
               "$ref": "#/definitions/RequestSendStatisticServerToEmail"
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [

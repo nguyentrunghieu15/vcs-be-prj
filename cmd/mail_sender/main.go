@@ -26,13 +26,16 @@ func main() {
 		"ELASTIC_ADDRESS":        {IsRequire: true, Type: env.STRING},
 		"ELASTIC_CERT_FINGER":    {IsRequire: true, Type: env.STRING},
 
-		"MAIL_SENDER_TEMPLATE":      {IsRequire: true, Type: env.STRING},
-		"MAIL_SENDER_EMAIL":         {IsRequire: true, Type: env.STRING},
-		"MAIL_SENDER_PASSWORD":      {IsRequire: true, Type: env.STRING},
-		"MAIL_SENDER_LOG_PATH":      {IsRequire: true, Type: env.STRING},
-		"MAIL_SENDER_NAME_FILE_LOG": {IsRequire: true, Type: env.STRING},
-		"MAIL_SENDER_ADDRESS":       {IsRequire: true, Type: env.STRING},
-		"MAIL_SENDER_PORT":          {IsRequire: true, Type: env.INT},
+		"MAIL_SENDER_TEMPLATE":           {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_EMAIL":              {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_PASSWORD":           {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_LOG_PATH":           {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_NAME_FILE_LOG":      {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_ADDRESS":            {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_PORT":               {IsRequire: true, Type: env.INT},
+		"MAIL_SENDER_EMAIL_SUPPER_ADMIN": {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_SMTP_HOST":          {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_SMTP_PORT":          {IsRequire: true, Type: env.STRING},
 	}
 	env.Load(".env", mailEnv)
 

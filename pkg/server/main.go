@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
 	gedis "github.com/nguyentrunghieu15/vcs-be-prj/pkg/redis"
@@ -46,6 +47,7 @@ type ServerService struct {
 	l          *logger.LoggerDecorator
 	ServerRepo ServerRepo
 	kafka      ProducerClientInterface
+	auhthorize *auth.Authorizer
 }
 
 type ServerServiceKafkaLogger struct {
@@ -119,6 +121,7 @@ func NewServerService() *ServerService {
 		ServerRepo: NewServerRepoProxy(newRedisConfig, connPostgres),
 		l:          newLogger,
 		kafka:      newKafka,
+		auhthorize: &auth.Authorizer{},
 	}
 }
 
@@ -130,6 +133,42 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 			"Name":   req.GetName(),
 		},
 	)
+
+	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Create server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Create server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToCreateServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Create server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't create user")
+	}
 
 	// validate data
 	if err := req.Validate(); err != nil {
@@ -176,18 +215,6 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 	}
 
 	// Get header
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Create Server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	if v, ok := header["id"]; ok {
 		server["CreatedBy"] = v[0]
 	}
@@ -216,7 +243,42 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 			"Id":     req.GetId(),
 		},
 	)
+
 	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Delete server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Delete server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToDeleteServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Delete server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't delete user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -249,17 +311,6 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 	}
 
 	// Get header
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Update Server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	if v, ok := header["id"]; ok {
 		s.ServerRepo.UpdateOneById(id, map[string]interface{}{"DeletedBy": v[0]})
 	}
@@ -292,6 +343,40 @@ func (s *ServerService) DeleteServerByName(
 		},
 	)
 	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Delete server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Delete server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToDeleteServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Delete server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't delete user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -323,17 +408,6 @@ func (s *ServerService) DeleteServerByName(
 	}
 
 	// Get header
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Update Server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	if v, ok := header["id"]; ok {
 		s.ServerRepo.UpdateOneByName(req.GetName(), map[string]interface{}{"DeletedBy": v[0]})
 	}
@@ -361,6 +435,42 @@ func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRe
 		},
 	)
 	// Authorize
+
+	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Export server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Export server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToExportServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Export server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't export user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -405,6 +515,40 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 	)
 
 	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Get server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Get server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToViewServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Get server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't get user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -447,6 +591,40 @@ func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerBy
 	)
 
 	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Get server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Get server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToViewServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Get server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't get user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -594,6 +772,40 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 		},
 	)
 	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "List server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "List server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToViewServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "List server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't list user")
+	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -659,6 +871,42 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 
 	// TO-DO Authorize
 
+	// Authorize
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Update server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Update server",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !s.auhthorize.HavePermisionToUpdateServer(model.UserRole(role[0])) {
+		s.l.Log(
+			logger.ERROR,
+			LogMessageServer{
+				"Action": "Update server",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't update user")
+	}
+
 	// validate data
 	if err := req.Validate(); err != nil {
 		s.l.Log(
@@ -706,18 +954,6 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 	}
 
 	// Get header
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Update Server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	if v, ok := header["id"]; ok {
 		server["UpdatedBy"] = v[0]
 	}

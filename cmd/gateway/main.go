@@ -15,6 +15,7 @@ import (
 	serverservice "github.com/nguyentrunghieu15/vcs-be-prj/pkg/gateway/server_service"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
 	authpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/auth"
+	"github.com/nguyentrunghieu15/vcs-common-prj/apu/mail_sender"
 	serverpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	userpb "github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
@@ -208,7 +209,7 @@ func main() {
 		r.GET("/user/:id", exportService.GetAllFileOfUser)
 	}
 
-	err = serverpb.RegisterServerServiceHandlerFromEndpoint(
+	err = mail_sender.RegisterMailServerHandlerFromEndpoint(
 		context.Background(),
 		mux,
 		fmt.Sprintf("%v:%v", env.GetEnv("MAIL_SENDER_ADDRESS"), env.GetEnv("MAIL_SENDER_PORT")),

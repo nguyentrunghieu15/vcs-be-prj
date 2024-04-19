@@ -12,13 +12,16 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/go-co-op/gocron/v2"
+	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/server"
 	pb "github.com/nguyentrunghieu15/vcs-common-prj/apu/mail_sender"
 	pbServer "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
+	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
@@ -32,6 +35,7 @@ type MailSenderServer struct {
 	elasticService *ElasticService
 	l              *logger.LoggerDecorator
 	serverRepo     *server.ServerRepositoryDecorator
+	authorize      *auth.Authorizer
 }
 
 func NewMailSenderServer() *MailSenderServer {
@@ -71,10 +75,12 @@ func NewMailSenderServer() *MailSenderServer {
 		serverRepo:     server.NewServerRepository(connPostgres),
 		elasticService: NewElasticService(elasticConfig),
 		l:              newLogger,
+		authorize:      &auth.Authorizer{},
 	}
 }
 
 type ResultStatisticServer struct {
+	To              string
 	TotalServer     int64
 	NumServerOff    int64
 	NumServerOn     int64
@@ -89,6 +95,45 @@ func (m *MailSenderServer) SendStatisticServerToEmail(ctx context.Context, req *
 			"Email":  req.Email,
 		},
 	)
+
+	fmt.Println(req)
+
+	// Authorize
+
+	header, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		m.l.Log(
+			logger.ERROR,
+			LogMessageMailSender{
+				"Action": "Send Statistic Server To Email",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	role, ok := header["role"]
+	if !ok {
+		m.l.Log(
+			logger.ERROR,
+			LogMessageMailSender{
+				"Action": "Send Statistic Server To Email",
+				"Error":  "Can't get header from request",
+			},
+		)
+		return nil, status.Error(codes.Internal, "Can't get header from request")
+	}
+
+	if !m.authorize.HavePermisionToSendMail(model.UserRole(role[0])) {
+		m.l.Log(
+			logger.ERROR,
+			LogMessageMailSender{
+				"Action": "Send Statistic Server To Email",
+				"Error":  "Permission denie",
+			},
+		)
+		return nil, status.Error(codes.PermissionDenied, "Can't Send Statistic Server To Email")
+	}
 
 	// validate data
 	if err := req.Validate(); err != nil {
@@ -225,7 +270,7 @@ func (m *MailSenderServer) WorkDaily() {
 					log.Println("Daily Email:", err)
 				}
 			},
-			"hieu@gmail.com",
+			env.GetEnv("MAIL_SENDER_EMAIL_SUPPER_ADMIN").(string),
 		),
 	)
 	s.Start()
