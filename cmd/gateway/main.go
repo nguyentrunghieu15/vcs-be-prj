@@ -105,6 +105,9 @@ func main() {
 
 		"FILE_SERVER_ADDRESS": {IsRequire: true, Type: env.STRING},
 		"FILE_SERVER_PORT":    {IsRequire: true, Type: env.STRING},
+
+		"MAIL_SENDER_ADDRESS": {IsRequire: true, Type: env.STRING},
+		"MAIL_SENDER_PORT":    {IsRequire: true, Type: env.INT},
 	}
 	env.Load(".env", gatewayConfigEnv)
 	e := echo.New()
@@ -204,6 +207,22 @@ func main() {
 		r.GET("/download", exportService.Export)
 		r.GET("/user/:id", exportService.GetAllFileOfUser)
 	}
+
+	err = serverpb.RegisterServerServiceHandlerFromEndpoint(
+		context.Background(),
+		mux,
+		fmt.Sprintf("%v:%v", env.GetEnv("MAIL_SENDER_ADDRESS"), env.GetEnv("MAIL_SENDER_PORT")),
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+
+	if err != nil {
+		log.Fatalln("Can't connect to Server service")
+	}
+	e.Any(
+		"/api/v1/mail*",
+		echo.WrapHandler(mux),
+		gateway_middleware.UseJwtMiddleware(),
+		gateway_middleware.UserParseJWTTokenMiddleware(),
+	)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%v:%v", env.GetEnv("GATEWAY_ADDRESS"), env.GetEnv("GATEWAY_PORT"))))
 }

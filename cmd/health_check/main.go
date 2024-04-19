@@ -13,6 +13,12 @@ func main() {
 		"POSTGRES_PASSWORD": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_DATABASE": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
+
+		"ELASTIC_CERT_PATH":      {IsRequire: true, Type: env.STRING},
+		"ELASTICSEARCH_USERNAME": {IsRequire: true, Type: env.STRING},
+		"ELASTICSEARCH_PASSWORD": {IsRequire: true, Type: env.STRING},
+		"ELASTIC_ADDRESS":        {IsRequire: true, Type: env.STRING},
+		"ELASTIC_CERT_FINGER":    {IsRequire: true, Type: env.STRING},
 	}
 
 	env.Load(".env", healthEnv)

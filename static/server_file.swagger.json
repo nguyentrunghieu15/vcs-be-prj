@@ -21,11 +21,8 @@
       "type": "object",
       "properties": {
         "chunk": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "byte"
-          }
+          "type": "string",
+          "format": "byte"
         }
       }
     },

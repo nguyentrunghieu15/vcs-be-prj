@@ -16,7 +16,7 @@ type ServerDocument struct {
 	Ipv4   string
 	Status model.ServerStatus
 	At     time.Time
-	In     time.Duration
+	In     int
 }
 
 type ElasticServiceHeath struct {
@@ -29,12 +29,11 @@ func NewElasticServiceHeath(config elasticsearch.Config) *ElasticServiceHeath {
 	if err != nil {
 		log.Fatalln("Can't create elastic client", err)
 	}
-	return &ElasticServiceHeath{client: typedClient}
+	return &ElasticServiceHeath{client: typedClient, index: "server_statistic"}
 }
 
 func (e *ElasticServiceHeath) CreateDocument(s *ServerDocument) error {
 	_, err := e.client.Index(e.index).
-		Id(s.ID.String() + s.At.Format(time.RFC3339)).
 		Document(s).Do(context.TODO())
 	return err
 }
