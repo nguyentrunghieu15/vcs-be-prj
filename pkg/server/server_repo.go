@@ -160,6 +160,12 @@ func (s *ServerRepositoryDecorator) FindServers(req *server.ListServerRequest) (
 	return servers, nil
 }
 
+func (s *ServerRepositoryDecorator) GetAllServers() ([]model.Server, error) {
+	var servers []model.Server
+	err := s.db.Find(&servers)
+	return servers, err.Error
+}
+
 func NewServerRepository(db *gorm.DB) *ServerRepositoryDecorator {
 	return &ServerRepositoryDecorator{model.CreateServerRepository(db), db}
 }

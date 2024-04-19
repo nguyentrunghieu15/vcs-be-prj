@@ -57,6 +57,7 @@ REDIS_PASSWORD=
 #file server
 FILE_SERVER_ADDRESS=
 FILE_SERVER_PORT=
+FILE_SERVER_FOLDER=file/storage
 
 #Exporter Folder
 EXPORTER_TEMP_FOLDER=file/exporter
