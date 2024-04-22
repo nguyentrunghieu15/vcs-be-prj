@@ -27,6 +27,13 @@ type LoggerConfig struct {
 	FileNameLogBase string
 }
 
+type LoggerDecoratorInterface interface {
+	ImplementedMiddlewareLogger() echo.MiddlewareFunc
+	Log(LevelLogType, map[string]interface{})
+	SetOutput(io.Writer)
+	SetToday(time.Time)
+}
+
 type LoggerDecorator struct {
 	_today time.Time
 	l      *log.Logger

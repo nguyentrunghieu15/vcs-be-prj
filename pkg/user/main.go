@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/mail"
 
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
@@ -20,10 +21,21 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
+type UserRepositoryDecoratorInterface interface {
+	CreateUser(map[string]interface{}) (*model.User, error)
+	DeleteOneByEmail(string) error
+	DeleteOneById(int) error
+	FindOneByEmail(string) (*model.User, error)
+	FindOneById(int) (*model.User, error)
+	FindUsers(*user.ListUsersRequest) ([]model.User, error)
+	UpdateOneByEmail(string, map[string]interface{}) (*model.User, error)
+	UpdateOneById(int, map[string]interface{}) (*model.User, error)
+}
+
 type UserServer struct {
 	user.UserServiceServer
-	UserRepo  *UserRepositoryDecorator
-	l         *logger.LoggerDecorator
+	UserRepo  UserRepositoryDecoratorInterface
+	l         logger.LoggerDecoratorInterface
 	bcrypt    *auth.BcryptService
 	authorize *auth.Authorizer
 }
@@ -61,7 +73,7 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 				"Error":  "Can't get header from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !u.authorize.HavePermisionToViewUser(model.UserRole(role[0])) {
@@ -78,7 +90,7 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := req.Validate(); err != nil || req.Id < 0 {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -86,7 +98,7 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 				"Error":  err,
 			},
 		)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, "Id cant be nagative")
 	}
 
 	// Get user
@@ -154,6 +166,17 @@ func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmail
 	// TO-DO : Write codo to Authorize
 
 	//validate data
+	_, err := mail.ParseAddress(req.GetEmail())
+	if err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "Get User",
+				"Error":  err,
+			},
+		)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	if err := req.Validate(); err != nil {
 		u.l.Log(
 			logger.ERROR,
