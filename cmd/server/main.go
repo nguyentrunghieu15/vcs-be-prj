@@ -20,6 +20,7 @@ func main() {
 		"SERVER_ADDRESS":       {IsRequire: true, Type: env.STRING},
 		"SERVER_LOG_PATH":      {IsRequire: true, Type: env.STRING},
 		"SERVER_NAME_FILE_LOG": {IsRequire: true, Type: env.STRING},
+		"SERVER_UPLOAD_FOLDER": {IsRequire: true, Type: env.STRING},
 
 		"POSTGRES_ADDRESS":  {IsRequire: true, Type: env.STRING},
 		"POSTGRES_PORT":     {IsRequire: true, Type: env.INT},
@@ -27,8 +28,6 @@ func main() {
 		"POSTGRES_PASSWORD": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_DATABASE": {IsRequire: true, Type: env.STRING},
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
-
-		"SERVER_UPLOAD_FOLDER": {IsRequire: true, Type: env.STRING},
 
 		"KAFKA_BOOTSTRAP_SERVER": {IsRequire: true, Type: env.STRING},
 		"KAFKA_GROUP_ID":         {IsRequire: true, Type: env.STRING},
