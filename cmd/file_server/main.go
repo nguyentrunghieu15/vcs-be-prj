@@ -18,7 +18,7 @@ func main() {
 		"FILE_SERVER_FOLDER":  {IsRequire: true, Type: env.STRING},
 	}
 
-	env.Load(".env", fileStogareEnv)
+	env.Load("./cmd/file_server/.env", fileStogareEnv)
 
 	lis, err := net.Listen(
 		"tcp",

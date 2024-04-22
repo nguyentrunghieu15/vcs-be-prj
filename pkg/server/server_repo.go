@@ -219,14 +219,15 @@ func ParseMapUpdateServerRequest(req *pb.UpdateServerRequest) (map[string]interf
 		}
 	}
 
-	if _, ok := result["Status"]; ok {
-		if req.GetStatus() == pb.ServerStatus_OFF {
-			result["Status"] = model.Off
-		}
-		if req.GetStatus() == pb.ServerStatus_ON {
-			result["Status"] = model.On
-		}
-	}
+	// if _, ok := result["Status"]; ok {
+	// 	if req.GetStatus() == pb.ServerStatus_OFF {
+	// 		result["Status"] = model.Off
+	// 	}
+	// 	if req.GetStatus() == pb.ServerStatus_ON {
+	// 		result["Status"] = model.On
+	// 	}
+	// }
+	result["Status"] = nil
 	return result, nil
 }
 

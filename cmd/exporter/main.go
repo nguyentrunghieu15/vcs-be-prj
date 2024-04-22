@@ -24,7 +24,7 @@ func main() {
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
 	}
 
-	env.Load(".env", exporterEnv)
+	env.Load("./cmd/exporter/.env", exporterEnv)
 
 	worker := exporter.NewExporterWorker()
 	worker.Work()

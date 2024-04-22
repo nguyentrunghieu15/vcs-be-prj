@@ -29,7 +29,7 @@ func main() {
 		"POSTGRES_SSLMODE":  {IsRequire: true, Type: env.STRING},
 	}
 
-	env.Load(".env", userEnv)
+	env.Load("./cmd/user/.env", userEnv)
 
 	var Address = fmt.Sprintf("%v:%v",
 		env.GetEnv("USER_ADDRESS"),

@@ -15,6 +15,8 @@ create-topic:
 	sudo sh ./script/kafka-create-topic.sh
 redis:
 	redis-server
+mail_sender:
+	go run ./cmd/mail_sender
 
 file_server:
 	go run ./cmd/file_server

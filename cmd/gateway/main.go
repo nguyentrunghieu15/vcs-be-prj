@@ -110,7 +110,7 @@ func main() {
 		"MAIL_SENDER_ADDRESS": {IsRequire: true, Type: env.STRING},
 		"MAIL_SENDER_PORT":    {IsRequire: true, Type: env.INT},
 	}
-	env.Load(".env", gatewayConfigEnv)
+	env.Load("./cmd/gateway/.env", gatewayConfigEnv)
 	e := echo.New()
 	newLogger := logger.NewLogger()
 	newLogger.Config = logger.LoggerConfig{

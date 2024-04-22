@@ -21,7 +21,7 @@ func main() {
 		"ELASTIC_CERT_FINGER":    {IsRequire: true, Type: env.STRING},
 	}
 
-	env.Load(".env", healthEnv)
+	env.Load("./cmd/health_check/.env", healthEnv)
 
 	doctor := healthcheck.NewHealthService()
 	doctor.Mintor()

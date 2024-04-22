@@ -40,7 +40,7 @@ func main() {
 		"REDIS_PASSWORD": {IsRequire: true, Type: env.STRING},
 	}
 
-	env.Load(".env", serverEnv)
+	env.Load("./cmd/server/.env", serverEnv)
 
 	var Address = fmt.Sprintf("%v:%v",
 		env.GetEnv("SERVER_ADDRESS"),

@@ -81,10 +81,11 @@ func ParseMapCreateUserRequest(req *user.CreateUserRequest) (map[string]interfac
 	}
 
 	if _, ok := result["Roles"]; ok {
-		if result["Roles"] == user.UserRole_RoleAdmin {
+		if user.UserRole(result["Roles"].(float64)) == user.UserRole_RoleAdmin {
 			result["Roles"] = model.RoleAdmin
 		}
-		if result["Roles"] == user.UserRole_RoleUser {
+		if user.UserRole(result["Roles"].(float64)) == user.UserRole_RoleUser {
+
 			result["Roles"] = model.RoleUser
 		}
 	}

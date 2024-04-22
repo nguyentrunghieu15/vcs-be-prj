@@ -37,7 +37,7 @@ func main() {
 		"MAIL_SENDER_SMTP_HOST":          {IsRequire: true, Type: env.STRING},
 		"MAIL_SENDER_SMTP_PORT":          {IsRequire: true, Type: env.STRING},
 	}
-	env.Load(".env", mailEnv)
+	env.Load("./cmd/mail_sender/.env", mailEnv)
 
 	var Address = fmt.Sprintf("%v:%v",
 		env.GetEnv("MAIL_SENDER_ADDRESS"),
