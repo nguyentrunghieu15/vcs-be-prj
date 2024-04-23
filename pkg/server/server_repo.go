@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	pb "github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
 	"gorm.io/gorm"
@@ -26,7 +25,7 @@ func TypeSortToString(v model.TypeSort) string {
 	return ""
 }
 
-func (s *ServerRepositoryDecorator) CountServers(query *string, filter *server.FilterServer) (int64, error) {
+func (s *ServerRepositoryDecorator) CountServers(query *string, filter *pb.FilterServer) (int64, error) {
 	result := s.db.Model(&model.Server{})
 
 	//Add query
@@ -83,7 +82,7 @@ func (s *ServerRepositoryDecorator) CountServers(query *string, filter *server.F
 	return count, nil
 }
 
-func (s *ServerRepositoryDecorator) FindServers(req *server.ListServerRequest) ([]model.Server, error) {
+func (s *ServerRepositoryDecorator) FindServers(req *pb.ListServerRequest) ([]model.Server, error) {
 	var servers []model.Server
 	result := s.db
 
@@ -260,8 +259,8 @@ func ConvertServerModelMapToServerProto(server map[string]interface{}) *pb.Serve
 	return ConvertServerModelToServerProto(structData)
 }
 
-func ConvertListServerModelMapToListServerProto(s []map[string]interface{}) []*server.Server {
-	var result []*server.Server = make([]*server.Server, 0)
+func ConvertListServerModelMapToListServerProto(s []map[string]interface{}) []*pb.Server {
+	var result []*pb.Server = make([]*pb.Server, 0)
 	for _, v := range s {
 		result = append(result, ConvertServerModelMapToServerProto(v))
 	}
