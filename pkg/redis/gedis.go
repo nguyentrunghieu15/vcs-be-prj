@@ -34,6 +34,11 @@ func (g *Gedis) Get(key string) *redis.MapStringStringCmd {
 
 }
 
+func (g *Gedis) FlushDb() *redis.StatusCmd {
+	return g.clientredis.FlushDB(context.Background())
+
+}
+
 func (g *Gedis) Set(key string, value map[string]string) *redis.IntCmd {
 	result := g.clientredis.HSet(context.Background(), key, value)
 

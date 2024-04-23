@@ -53,12 +53,14 @@ func (s *ServerRepoProxy) CreateBacth(
 	userId uint64,
 	data []map[string]interface{},
 ) (*server.ImportServerResponse, error) {
+	s.redisCache.ClearCache()
 	return s.serverPostgreRepo.CreateBacth(userId, data)
 }
 
 // CreateServer implements ServerRepo.
 func (s *ServerRepoProxy) CreateServer(
 	server map[string]interface{}) (*model.Server, error) {
+	s.redisCache.ClearCache()
 	return s.serverPostgreRepo.CreateServer(server)
 }
 
@@ -68,18 +70,17 @@ func (s *ServerRepoProxy) DeleteOneById(serverId uuid.UUID) error {
 	if result != nil {
 		return result
 	}
-	result = s.redisCache.DelKeyContainServerID(serverId.String())
+	s.redisCache.ClearCache()
 	return result
 }
 
 // DeleteOneByName implements ServerRepo.
 func (s *ServerRepoProxy) DeleteOneByName(name string) error {
-	server, _ := s.serverPostgreRepo.FindOneByName(name)
 	result := s.serverPostgreRepo.DeleteOneByName(name)
 	if result != nil {
 		return result
 	}
-	result = s.redisCache.DelKeyContainServerID(server.ID.String())
+	s.redisCache.ClearCache()
 	return result
 }
 

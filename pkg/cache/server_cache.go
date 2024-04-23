@@ -82,6 +82,11 @@ func (s *ServerCache) GetListServerWithKey(key string) ([]model.Server, error) {
 	return result, nil
 }
 
+func (s *ServerCache) ClearCache() error {
+	reuslt := s.gedis.FlushDb()
+	return reuslt.Err()
+}
+
 func (s *ServerCache) convertServerToMapRedis(server model.Server) map[string]string {
 	return map[string]string{
 		"id":         server.ID.String(),
