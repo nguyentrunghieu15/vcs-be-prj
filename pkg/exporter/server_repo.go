@@ -56,9 +56,9 @@ func (s *ExporterServerRepo) FindAllServer(req *pb.ExportServerRequest) ([]model
 
 		if status := filter.Status; status != nil {
 			switch *status {
-			case pb.ServerStatus_ON:
+			case pb.FilterServer_ON:
 				result = result.Where("status = ? ", model.On)
-			case pb.ServerStatus_OFF:
+			case pb.FilterServer_OFF:
 				result = result.Where("status = ? ", model.Off)
 			}
 		}

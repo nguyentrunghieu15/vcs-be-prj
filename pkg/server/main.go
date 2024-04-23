@@ -192,11 +192,11 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 				"Action": "Create server",
 				"Name":   req.GetName(),
 				"Error":  "Already Exists",
-				"Detail": fmt.Errorf("Already Exists server name", req.GetName()),
+				"Detail": fmt.Errorf("Already Exists server name: %v", req.GetName()),
 			},
 		)
 		return nil, status.Error(codes.AlreadyExists,
-			fmt.Sprintf("Already Exists server name", req.GetName()))
+			fmt.Sprintf("Already Exists server name: %v", req.GetName()))
 	}
 
 	// Parse data request
@@ -208,7 +208,7 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 				"Action": "Create server",
 				"Name":   req.GetName(),
 				"Error":  "Parse data",
-				"Detail": fmt.Errorf("Parse data", err),
+				"Detail": fmt.Errorf("Parse data: %v", err),
 			},
 		)
 		return nil, status.Error(codes.Internal, err.Error())
@@ -936,10 +936,10 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 				"Action": "Update server",
 				"Id":     req.GetId(),
 				"Error":  "Already Exists",
-				"Detail": fmt.Errorf("Already Exists server name", req.GetName()),
+				"Detail": fmt.Errorf("Already Exists server name :%v", req.GetName()),
 			},
 		)
-		return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("Already Exists server name", req.GetName()))
+		return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("Already Exists server name: %v", req.GetName()))
 	}
 
 	// Parse data request
@@ -951,7 +951,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 				"Action": "Update server",
 				"Id":     req.GetId(),
 				"Error":  "Parse data",
-				"Detail": fmt.Errorf("Parse data", err),
+				"Detail": fmt.Errorf("Parse data: %v", err),
 			},
 		)
 		return nil, status.Error(codes.Internal, err.Error())

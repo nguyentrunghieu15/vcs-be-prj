@@ -41,7 +41,7 @@ type UserServer struct {
 }
 
 // GetUser implements user.UserServiceServer.
-func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (*user.User, error) {
+func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (*user.ResponseUser, error) {
 	u.l.Log(
 		logger.INFO,
 		LogMessageUser{
@@ -118,7 +118,7 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 }
 
 // GetUserByEmail implements user.UserServiceServer.
-func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmailRequest) (*user.User, error) {
+func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmailRequest) (*user.ResponseUser, error) {
 	u.l.Log(
 		logger.INFO,
 		LogMessageUser{
@@ -291,7 +291,7 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 }
 
 // CreateUser implements user.UserServiceServer.
-func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest) (*user.User, error) {
+func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest) (*user.ResponseUser, error) {
 	u.l.Log(
 		logger.INFO,
 		LogMessageUser{
@@ -416,7 +416,7 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 }
 
 // UpdateUser implements user.UserServiceServer.
-func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdRequest) (*user.User, error) {
+func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdRequest) (*user.ResponseUser, error) {
 	u.l.Log(
 		logger.INFO,
 		LogMessageUser{
@@ -618,7 +618,7 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 	return nil, nil
 }
 
-func (u *UserServer) ChangePasswordUser(ctx context.Context, req *user.ChangePasswordRequest) (*user.User, error) {
+func (u *UserServer) ChangePasswordUser(ctx context.Context, req *user.ChangePasswordRequest) (*user.ResponseUser, error) {
 	// TO-DO code
 	return nil, nil
 }
@@ -656,52 +656,6 @@ func NewUserServer() *UserServer {
 		bcrypt:    &auth.BcryptService{},
 		authorize: &auth.Authorizer{},
 	}
-}
-
-func ConvertUserRoleModelToUserRoleProto(role model.UserRole) user.UserRole {
-	switch role {
-	case model.RoleAdmin:
-		return user.UserRole_RoleAdmin
-	case model.RoleUser:
-		return user.UserRole_RoleUser
-	default:
-		return user.UserRole_RoleNone
-	}
-}
-
-func ConvertUserRoleProtoToUserRoleModel(role user.UserRole) model.UserRole {
-	switch role {
-	case user.UserRole_RoleAdmin:
-		return model.RoleAdmin
-	case user.UserRole_RoleUser:
-		return model.RoleUser
-	default:
-		return ""
-	}
-}
-
-func ConvertUserModelToUserProto(u model.User) *user.User {
-	return &user.User{
-		Id:            int64(u.ID),
-		CreatedAt:     u.CreatedAt.String(),
-		CreatedBy:     int64(u.CreatedBy),
-		UpdatedAt:     u.UpdatedAt.String(),
-		UpdatedBy:     int64(u.UpdatedBy),
-		Email:         u.Email,
-		FullName:      u.FullName,
-		Phone:         u.Phone,
-		Avatar:        u.Avatar,
-		IsSupperAdmin: u.IsSupperAdmin,
-		Roles:         ConvertUserRoleModelToUserRoleProto(u.Roles),
-	}
-}
-
-func ConvertListUserModelToListUserProto(u []model.User) []*user.User {
-	var result []*user.User = make([]*user.User, 0)
-	for _, v := range u {
-		result = append(result, ConvertUserModelToUserProto(v))
-	}
-	return result
 }
 
 type LogMessageUser map[string]interface{}

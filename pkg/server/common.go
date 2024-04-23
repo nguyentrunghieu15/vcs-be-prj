@@ -12,14 +12,14 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func ConvertStatusServerModelToStatusServerProto(server model.ServerStatus) pb.ServerStatus {
+func ConvertStatusServerModelToStatusServerProto(server model.ServerStatus) pb.Server_ServerStatus {
 	switch server {
 	case model.On:
-		return pb.ServerStatus_ON
+		return pb.Server_ON
 	case model.Off:
-		return pb.ServerStatus_OFF
+		return pb.Server_OFF
 	default:
-		return pb.ServerStatus_STATUSNONE
+		return pb.Server_NONE
 	}
 }
 

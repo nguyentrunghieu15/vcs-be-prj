@@ -18,7 +18,7 @@ import (
 
 type AuthServer struct {
 	auth.AuthServiceServer
-	UserRepo model.UserRepositoryDecorator
+	UserRepo model.IUserRepository
 	Jwt      JwtService
 	Bcrypt   BcryptService
 	Logger   *logger.LoggerDecorator
@@ -177,7 +177,7 @@ func NewAuthServer() *AuthServer {
 	var authServer AuthServer
 	connPostgres, _ := postgres.(*gorm.DB)
 	connPostgres.Config.Logger = gormLogger.Default.LogMode(gormLogger.Info)
-	authServer.UserRepo = model.CreateUserRepository(connPostgres)
+	authServer.UserRepo = model.NewUserRepository(connPostgres)
 	authServer.Jwt.SecretKey = env.GetEnv("JWT_SECRETKEY").(string)
 	newLogger := logger.NewLogger()
 	newLogger.Config = logger.LoggerConfig{

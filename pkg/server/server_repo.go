@@ -66,9 +66,9 @@ func (s *ServerRepositoryDecorator) CountServers(query *string, filter *pb.Filte
 
 		if status := filter.Status; status != nil {
 			switch *status {
-			case pb.ServerStatus_ON:
+			case pb.FilterServer_ON:
 				result = result.Where("status = ? ", model.On)
-			case pb.ServerStatus_OFF:
+			case pb.FilterServer_OFF:
 				result = result.Where("status = ? ", model.Off)
 			}
 		}
@@ -124,9 +124,9 @@ func (s *ServerRepositoryDecorator) FindServers(req *pb.ListServerRequest) ([]mo
 
 		if status := filter.Status; status != nil {
 			switch *status {
-			case pb.ServerStatus_ON:
+			case pb.FilterServer_ON:
 				result = result.Where("status = ? ", model.On)
-			case pb.ServerStatus_OFF:
+			case pb.FilterServer_OFF:
 				result = result.Where("status = ? ", model.Off)
 			}
 		}
@@ -189,10 +189,10 @@ func ParseMapCreateServerRequest(req *pb.CreateServerRequest) (map[string]interf
 	}
 
 	if _, ok := result["Status"]; ok {
-		if req.GetStatus() == pb.ServerStatus_OFF {
+		if req.GetStatus() == pb.CreateServerRequest_OFF {
 			result["Status"] = model.Off
 		}
-		if req.GetStatus() == pb.ServerStatus_ON {
+		if req.GetStatus() == pb.CreateServerRequest_ON {
 			result["Status"] = model.On
 		}
 	}

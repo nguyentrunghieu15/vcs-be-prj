@@ -153,14 +153,14 @@ func TestUserServer_GetUser(t *testing.T) {
 		},
 		"Must_Pass": {
 			in: &user.GetUserByIdRequest{
-				Id: -1,
+				Id: 1,
 			},
 			expected: expectation{
 				out: &user.User{
 					Id:    1,
 					Email: "hieu@gmail.com",
 				},
-				err: status.Error(codes.InvalidArgument, "Id cant be nagative"),
+				err: nil,
 			},
 		},
 	}
@@ -270,8 +270,8 @@ func TestUserServer_ListUsers(t *testing.T) {
 			in: &user.ListUsersRequest{},
 			expected: expectation{
 				out: &user.ListUsersResponse{
-					Users: []*user.User{
-						&user.User{
+					Users: []*user.ResponseUser{
+						&user.ResponseUser{
 							Email: "hieu@gmail.com",
 						},
 					},

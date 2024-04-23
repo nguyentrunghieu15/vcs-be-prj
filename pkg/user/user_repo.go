@@ -1,7 +1,6 @@
 package user
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
@@ -16,7 +15,7 @@ type UserRepositoryDecorator struct {
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepositoryDecorator {
-	return &UserRepositoryDecorator{model.CreateUserRepository(db), db}
+	return &UserRepositoryDecorator{model.NewUserRepository(db), db}
 }
 
 func TypeSortToString(v model.TypeSort) string {
@@ -54,79 +53,6 @@ func (u *UserRepositoryDecorator) FindUsers(req *user.ListUsersRequest) ([]model
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return user, nil
-}
-
-func ParseMapCreateUserRequest(req *user.CreateUserRequest) (map[string]interface{}, error) {
-	t, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
-
-	if err = json.Unmarshal(t, &mapRequest); err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < len(DefinedFieldCreateUserRequest); i++ {
-		if value, ok := mapRequest[DefinedFieldCreateUserRequest[i]["fieldNameProto"]]; ok {
-			result[DefinedFieldCreateUserRequest[i]["fieldNameModel"]] = value
-		}
-	}
-
-	if _, ok := result["IsSupperAdmin"]; !ok {
-		result["IsSupperAdmin"] = false
-	}
-
-	if _, ok := result["Roles"]; ok {
-		if user.UserRole(result["Roles"].(float64)) == user.UserRole_RoleAdmin {
-			result["Roles"] = model.RoleAdmin
-		}
-		if user.UserRole(result["Roles"].(float64)) == user.UserRole_RoleUser {
-
-			result["Roles"] = model.RoleUser
-		}
-	}
-
-	return result, nil
-}
-
-func ParseMapUpdateUserRequest(req *user.UpdateUserByIdRequest) (map[string]interface{}, error) {
-	var fieldName = []string{"Email", "FullName", "Phone", "Avatar", "IsSupperAdmin", "Roles"}
-	var fieldProtoName = []string{"email", "full_name", "phone", "avatar", "is_supper_admin", "roles"}
-
-	t, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
-
-	if err = json.Unmarshal(t, &mapRequest); err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < len(fieldName); i++ {
-		if value, ok := mapRequest[fieldProtoName[i]]; ok {
-			result[fieldName[i]] = value
-		}
-	}
-
-	if _, ok := result["IsSupperAdmin"]; !ok {
-		result["IsSupperAdmin"] = false
-	}
-
-	if _, ok := result["Roles"]; ok {
-		if req.GetRoles() == user.UserRole_RoleAdmin {
-			result["Roles"] = model.RoleAdmin
-		}
-		if req.GetRoles() == user.UserRole_RoleUser {
-			result["Roles"] = model.RoleUser
-		}
-	}
-
-	return result, nil
 }

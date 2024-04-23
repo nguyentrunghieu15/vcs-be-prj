@@ -154,10 +154,10 @@ func (m *MailSenderServer) SendStatisticServerToEmail(ctx context.Context, req *
 	result.TotalServer, _ = m.serverRepo.CountServers(nil, nil)
 
 	result.NumServerOn, _ = m.serverRepo.CountServers(nil,
-		&pbServer.FilterServer{Status: pbServer.ServerStatus_ON.Enum()})
+		&pbServer.FilterServer{Status: pbServer.FilterServer_ON.Enum()})
 
 	result.NumServerOff, _ = m.serverRepo.CountServers(nil,
-		&pbServer.FilterServer{Status: pbServer.ServerStatus_OFF.Enum()})
+		&pbServer.FilterServer{Status: pbServer.FilterServer_OFF.Enum()})
 
 	avgResponse, _ := m.elasticService.GetAverageUpTimeServer(req)
 
@@ -208,10 +208,10 @@ func (m *MailSenderServer) DailySendMail(req *pb.RequestSendStatisticServerToEma
 	result.TotalServer, _ = m.serverRepo.CountServers(nil, nil)
 
 	result.NumServerOn, _ = m.serverRepo.CountServers(nil,
-		&pbServer.FilterServer{Status: pbServer.ServerStatus_ON.Enum()})
+		&pbServer.FilterServer{Status: pbServer.FilterServer_ON.Enum()})
 
 	result.NumServerOff, _ = m.serverRepo.CountServers(nil,
-		&pbServer.FilterServer{Status: pbServer.ServerStatus_OFF.Enum()})
+		&pbServer.FilterServer{Status: pbServer.FilterServer_OFF.Enum()})
 
 	avgResponse, _ := m.elasticService.GetAverageUpTimeServer(req)
 
