@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/mail"
 
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/auth"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/env"
 	"github.com/nguyentrunghieu15/vcs-be-prj/pkg/logger"
-	"github.com/nguyentrunghieu15/vcs-common-prj/apu/server"
 	"github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/managedb"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
@@ -38,6 +36,7 @@ type UserServer struct {
 	l         logger.LoggerDecoratorInterface
 	bcrypt    *auth.BcryptService
 	authorize *auth.Authorizer
+	validator IValidator
 }
 
 // GetUser implements user.UserServiceServer.
@@ -52,17 +51,7 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 
 	// Authorize
 
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Get user",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
+	header, _ := metadata.FromIncomingContext(ctx)
 
 	role, ok := header["role"]
 	if !ok {
@@ -87,10 +76,8 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 		return nil, status.Error(codes.PermissionDenied, "Can't get user")
 	}
 
-	// TO-DO : Write codo to Authorize
-
 	//validate data
-	if err := req.Validate(); err != nil || req.Id < 0 {
+	if err := u.validator.Validate(req); err != nil {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -108,13 +95,13 @@ func (u UserServer) GetUser(ctx context.Context, req *user.GetUserByIdRequest) (
 			logger.ERROR,
 			LogMessageUser{
 				"Action": "Get User",
-				"Error":  "Invalid data in request",
+				"Error":  "Not found data",
 				"Detail": err,
 			},
 		)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
-	return ConvertUserModelToUserProto(*user), nil
+	return ConvertUserModelToUserProto(*user)
 }
 
 // GetUserByEmail implements user.UserServiceServer.
@@ -128,17 +115,7 @@ func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmail
 	)
 
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Get user",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
+	header, _ := metadata.FromIncomingContext(ctx)
 
 	role, ok := header["role"]
 	if !ok {
@@ -146,10 +123,10 @@ func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmail
 			logger.ERROR,
 			LogMessageUser{
 				"Action": "Get user",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !u.authorize.HavePermisionToViewUser(model.UserRole(role[0])) {
@@ -165,19 +142,7 @@ func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmail
 
 	// TO-DO : Write codo to Authorize
 
-	//validate data
-	_, err := mail.ParseAddress(req.GetEmail())
-	if err != nil {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Get User",
-				"Error":  err,
-			},
-		)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	if err := req.Validate(); err != nil {
+	if err := u.validator.Validate(req); err != nil {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -201,7 +166,7 @@ func (u UserServer) GetUserByEmail(ctx context.Context, req *user.GetUserByEmail
 		)
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
-	return ConvertUserModelToUserProto(*user), nil
+	return ConvertUserModelToUserProto(*user)
 }
 
 // ListUsers implements user.UserServiceServer.
@@ -214,17 +179,7 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 	)
 	// Authorize
 
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Create get user",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
+	header, _ := metadata.FromIncomingContext(ctx)
 
 	role, ok := header["role"]
 	if !ok {
@@ -232,10 +187,10 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 			logger.ERROR,
 			LogMessageUser{
 				"Action": "List user",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !u.authorize.HavePermisionToViewUser(model.UserRole(role[0])) {
@@ -252,18 +207,7 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "List User",
-				"Error":  "Invalid data in request",
-				"Detail": err,
-			},
-		)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	if err := ValidateListUserQuery(req); err != nil {
+	if err := u.validator.Validate(req); err != nil {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -287,7 +231,20 @@ func (u *UserServer) ListUsers(ctx context.Context, req *user.ListUsersRequest) 
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &user.ListUsersResponse{Users: ConvertListUserModelToListUserProto(users)}, nil
+
+	t, err := ConvertListUserModelToListUserProto(users)
+	if err != nil {
+		u.l.Log(
+			logger.ERROR,
+			LogMessageUser{
+				"Action": "List User",
+				"Error":  err,
+			},
+		)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &user.ListUsersResponse{Users: t}, nil
 }
 
 // CreateUser implements user.UserServiceServer.
@@ -301,17 +258,7 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 	)
 	// Authorize
 
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Create  user",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
+	header, _ := metadata.FromIncomingContext(ctx)
 
 	role, ok := header["role"]
 	if !ok {
@@ -322,7 +269,7 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 				"Error":  "Can't get header from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !u.authorize.HavePermisionToCreateUser(model.UserRole(role[0])) {
@@ -339,7 +286,7 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := u.validator.Validate(req); err != nil {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -354,7 +301,7 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 
 	// check user already exsits
 	exsitsUser, _ := u.UserRepo.FindOneByEmail(req.GetEmail())
-	if exsitsUser != nil {
+	if exsitsUser != nil && exsitsUser.Email == req.Email {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -412,7 +359,7 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return ConvertUserModelToUserProto(*createdUser), nil
+	return ConvertUserModelToUserProto(*createdUser)
 }
 
 // UpdateUser implements user.UserServiceServer.
@@ -426,17 +373,7 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 	)
 	// Authorize
 
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Update user",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
+	header, _ := metadata.FromIncomingContext(ctx)
 
 	role, ok := header["role"]
 	if !ok {
@@ -447,7 +384,7 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 				"Error":  "Can't get header from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !u.authorize.HavePermisionToUpdateUser(model.UserRole(role[0])) {
@@ -464,7 +401,7 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := u.validator.Validate(req); err != nil {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -520,7 +457,7 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return ConvertUserModelToUserProto(*updatedUser), nil
+	return ConvertUserModelToUserProto(*updatedUser)
 }
 
 // DeleteUSer implements user.UserServiceServer.
@@ -534,17 +471,7 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 	)
 	// Authorize
 
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		u.l.Log(
-			logger.ERROR,
-			LogMessageUser{
-				"Action": "Create get user",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
+	header, _ := metadata.FromIncomingContext(ctx)
 
 	role, ok := header["role"]
 	if !ok {
@@ -552,10 +479,10 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 			logger.ERROR,
 			LogMessageUser{
 				"Action": "Delete user",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !u.authorize.HavePermisionToDeleteUser(model.UserRole(role[0])) {
@@ -572,7 +499,7 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := u.validator.Validate(req); err != nil {
 		u.l.Log(
 			logger.ERROR,
 			LogMessageUser{
@@ -618,7 +545,10 @@ func (u *UserServer) DeleteUser(ctx context.Context, req *user.DeleteUserByIdReq
 	return nil, nil
 }
 
-func (u *UserServer) ChangePasswordUser(ctx context.Context, req *user.ChangePasswordRequest) (*user.ResponseUser, error) {
+func (u *UserServer) ChangePasswordUser(
+	ctx context.Context,
+	req *user.ChangePasswordRequest,
+) (*user.ResponseUser, error) {
 	// TO-DO code
 	return nil, nil
 }
@@ -655,31 +585,8 @@ func NewUserServer() *UserServer {
 		l:         newLogger,
 		bcrypt:    &auth.BcryptService{},
 		authorize: &auth.Authorizer{},
+		validator: NewUserServiceValidator(),
 	}
 }
 
 type LogMessageUser map[string]interface{}
-
-func ValidateListUserQuery(req *user.ListUsersRequest) error {
-	if req.GetPagination() != nil {
-		if limit := req.GetPagination().Limit; limit != nil && *limit < 1 {
-			return fmt.Errorf("Limit must be a positive number")
-		}
-
-		if page := req.GetPagination().Page; page != nil && *page < 1 {
-			return fmt.Errorf("Page must be a positive number")
-		}
-
-		if pageSize := req.GetPagination().PageSize; pageSize != nil && *pageSize < 1 {
-			return fmt.Errorf("Page size must be a positive number")
-		}
-
-		if sort := req.GetPagination().Sort; sort != nil &&
-			*sort != server.TypeSort_ASC &&
-			*sort != server.TypeSort_DESC &&
-			*sort != server.TypeSort_NONE {
-			return fmt.Errorf("Invalid type order")
-		}
-	}
-	return nil
-}

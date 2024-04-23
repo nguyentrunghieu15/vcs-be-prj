@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
 	"github.com/nguyentrunghieu15/vcs-common-prj/db/model"
@@ -15,73 +16,47 @@ func ParseMapCreateUserRequest(req *user.CreateUserRequest) (map[string]interfac
 	}
 
 	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
 
 	if err = json.Unmarshal(t, &mapRequest); err != nil {
 		return nil, err
 	}
 
-	fmt.Println(mapRequest)
-
-	for i := 0; i < len(DefinedFieldCreateUserRequest); i++ {
-		if value, ok := mapRequest[DefinedFieldCreateUserRequest[i]["fieldNameProto"]]; ok {
-			result[DefinedFieldCreateUserRequest[i]["fieldNameModel"]] = value
+	if v, ok := mapRequest["roles"]; ok {
+		if v.(float64) == 2 {
+			mapRequest["roles"] = model.RoleUser
+		}
+		if v.(float64) == 1 {
+			mapRequest["roles"] = model.RoleAdmin
 		}
 	}
 
-	if _, ok := result["IsSupperAdmin"]; !ok {
-		result["IsSupperAdmin"] = false
-	}
-
-	if _, ok := result["Roles"]; ok {
-		if user.CreateUserRequest_Role(result["Roles"].(float64)) == user.CreateUserRequest_admin {
-			result["Roles"] = model.RoleAdmin
-		}
-		if user.CreateUserRequest_Role(result["Roles"].(float64)) == user.CreateUserRequest_user {
-
-			result["Roles"] = model.RoleUser
-		}
-	}
-
-	return result, nil
+	return mapRequest, nil
 }
 
 func ParseMapUpdateUserRequest(req *user.UpdateUserByIdRequest) (map[string]interface{}, error) {
-	var fieldName = []string{"Email", "FullName", "Phone", "Avatar", "IsSupperAdmin", "Roles"}
-	var fieldProtoName = []string{"email", "full_name", "phone", "avatar", "is_supper_admin", "roles"}
-
 	t, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
 
 	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
 
 	if err = json.Unmarshal(t, &mapRequest); err != nil {
 		return nil, err
 	}
 
-	for i := 0; i < len(fieldName); i++ {
-		if value, ok := mapRequest[fieldProtoName[i]]; ok {
-			result[fieldName[i]] = value
+	delete(mapRequest, "id")
+
+	if v, ok := mapRequest["roles"]; ok {
+		if v.(float64) == 2 {
+			mapRequest["roles"] = model.RoleUser
+		}
+		if v.(float64) == 1 {
+			mapRequest["roles"] = model.RoleAdmin
 		}
 	}
 
-	if _, ok := result["IsSupperAdmin"]; !ok {
-		result["IsSupperAdmin"] = false
-	}
-
-	if _, ok := result["Roles"]; ok {
-		if req.GetRoles() == user.UpdateUserByIdRequest_admin {
-			result["Roles"] = model.RoleAdmin
-		}
-		if req.GetRoles() == user.UpdateUserByIdRequest_user {
-			result["Roles"] = model.RoleUser
-		}
-	}
-
-	return result, nil
+	return mapRequest, nil
 }
 
 func ConvertUserRoleModelToUserRoleProto(role model.UserRole) user.ResponseUser_Role {
@@ -106,26 +81,77 @@ func ConvertUserRoleProtoToUserRoleModel(role user.User_Role) model.UserRole {
 	}
 }
 
-func ConvertUserModelToUserProto(u model.User) *user.ResponseUser {
-	return &user.ResponseUser{
-		Id:            int64(u.ID),
-		CreatedAt:     u.CreatedAt.String(),
-		CreatedBy:     int64(u.CreatedBy),
-		UpdatedAt:     u.UpdatedAt.String(),
-		UpdatedBy:     int64(u.UpdatedBy),
-		Email:         u.Email,
-		FullName:      u.FullName,
-		Phone:         u.Phone,
-		Avatar:        u.Avatar,
-		IsSupperAdmin: u.IsSupperAdmin,
-		Roles:         ConvertUserRoleModelToUserRoleProto(u.Roles),
+func ConvertUserModelToUserProto(u model.User) (*user.ResponseUser, error) {
+	t, err := json.Marshal(u)
+	if err != nil {
+		return nil, err
 	}
+
+	mapTemp := make(map[string]interface{})
+
+	if err = json.Unmarshal(t, &mapTemp); err != nil {
+		return nil, err
+	}
+
+	delete(mapTemp, "password")
+	switch u.Roles {
+	case model.RoleAdmin:
+		mapTemp["roles"] = user.ResponseUser_admin
+	case model.RoleUser:
+		mapTemp["roles"] = user.ResponseUser_user
+	default:
+		mapTemp["roles"] = user.ResponseUser_none
+	}
+
+	t, err = json.Marshal(mapTemp)
+	if err != nil {
+		return nil, err
+	}
+
+	var result user.ResponseUser
+	err = json.Unmarshal(t, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := mapTemp["isSupperAdmin"]; ok {
+		result.IsSupperAdmin = u.IsSupperAdmin
+	}
+	if _, ok := mapTemp["fullName"]; ok {
+		result.FullName = u.FullName
+	}
+	if _, ok := mapTemp["createdAt"]; ok && mapTemp["createdAt"] != "0001-01-01T00:00:00Z" {
+		result.CreatedAt = u.CreatedAt.Format(time.RFC3339)
+	}
+	if _, ok := mapTemp["updatedAt"]; ok && mapTemp["updatedAt"] != "0001-01-01T00:00:00Z" {
+		result.UpdatedAt = u.UpdatedAt.Format(time.RFC3339)
+	}
+	if _, ok := mapTemp["deletedAt"]; ok && mapTemp["deletedAt"] != nil {
+		fmt.Println(mapTemp["deletedAt"])
+		result.DeletedAt = u.DeletedAt.Time.Format(time.RFC3339)
+	}
+
+	if _, ok := mapTemp["createdBy"]; ok {
+		result.CreatedBy = int64(u.CreatedBy)
+	}
+	if _, ok := mapTemp["updatedBy"]; ok {
+		result.UpdatedBy = int64(u.UpdatedBy)
+	}
+	if _, ok := mapTemp["deletedBy"]; ok {
+		result.DeletedBy = int64(u.DeletedBy)
+	}
+
+	return &result, nil
 }
 
-func ConvertListUserModelToListUserProto(u []model.User) []*user.ResponseUser {
+func ConvertListUserModelToListUserProto(u []model.User) ([]*user.ResponseUser, error) {
 	var result []*user.ResponseUser = make([]*user.ResponseUser, 0)
 	for _, v := range u {
-		result = append(result, ConvertUserModelToUserProto(v))
+		t, err := ConvertUserModelToUserProto(v)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, t)
 	}
-	return result
+	return result, nil
 }

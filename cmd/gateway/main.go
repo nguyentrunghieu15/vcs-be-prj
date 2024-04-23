@@ -60,7 +60,7 @@ func CreateSupperAdmin() {
 	if err != nil {
 		log.Fatalln("Can't hash password of supper admin")
 	}
-	_, err = model.CreateUserRepository(connPostgres).CreateUser(
+	_, err = model.NewUserRepository(connPostgres).CreateUser(
 		map[string]interface{}{
 			"Email":         SupperAdmin["Email"],
 			"Password":      hashPassword,
