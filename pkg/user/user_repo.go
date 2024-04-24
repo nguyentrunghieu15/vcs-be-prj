@@ -10,7 +10,7 @@ import (
 )
 
 type UserRepositoryDecorator struct {
-	*model.UserRepository
+	model.IUserRepository
 	db *gorm.DB
 }
 

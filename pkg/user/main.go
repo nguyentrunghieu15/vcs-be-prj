@@ -341,10 +341,10 @@ func (u *UserServer) CreateUser(ctx context.Context, req *user.CreateUserRequest
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	user["Password"] = hashedPassword
+	user["password"] = hashedPassword
 
 	if v, ok := header["id"]; ok {
-		user["CreatedBy"] = v[0]
+		user["created_by"] = v[0]
 	}
 
 	createdUser, err := u.UserRepo.CreateUser(user)
@@ -441,7 +441,7 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *user.UpdateUserByIdReq
 	}
 
 	if v, ok := header["id"]; ok {
-		user["UpdatedBy"] = v[0]
+		user["updated_by"] = v[0]
 	}
 
 	// Update user
