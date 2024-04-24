@@ -3,6 +3,7 @@ package mailsenderservice
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"html/template"
 	"log"
@@ -24,6 +25,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	gomail "gopkg.in/mail.v2"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 )
@@ -96,8 +98,6 @@ func (m *MailSenderServer) SendStatisticServerToEmail(ctx context.Context, req *
 		},
 	)
 
-	fmt.Println(req)
-
 	// Authorize
 
 	header, ok := metadata.FromIncomingContext(ctx)
@@ -168,15 +168,13 @@ func (m *MailSenderServer) SendStatisticServerToEmail(ctx context.Context, req *
 
 	// Receiver email address.
 	to := []string{
-		req.To,
+		req.Email,
 	}
 
 	// smtp server configuration.
 	smtpHost := env.GetEnv("MAIL_SENDER_SMTP_HOST").(string)
-	smtpPort := env.GetEnv("MAIL_SENDER_SMTP_PORT").(string)
 
 	// Authentication.
-	auth := smtp.PlainAuth("", from, password, smtpHost)
 
 	t, _ := template.ParseFiles(env.GetEnv("MAIL_SENDER_TEMPLATE").(string))
 
@@ -186,11 +184,33 @@ func (m *MailSenderServer) SendStatisticServerToEmail(ctx context.Context, req *
 
 	t.Execute(&body, result)
 
-	// Sending email.
-	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	tm := gomail.NewMessage()
+
+	// Set E-Mail sender
+	tm.SetHeader("From", from)
+
+	// Set E-Mail receivers
+	tm.SetHeader("To", to...)
+
+	// Set E-Mail subject
+	tm.SetHeader("Subject", "Report VCS")
+
+	// Set E-Mail body. You can set plain text or html with text/html
+	tm.SetBody("text/html", body.String())
+
+	// Settings for SMTP server
+	d := gomail.NewDialer(smtpHost, 587, from, password)
+
+	// This is only needed when SSL/TLS certificate is not valid on server.
+	// In production this should be set to false.
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+
+	// Now send E-Mail
+	if err := d.DialAndSend(tm); err != nil {
+		fmt.Println(err)
+		panic(err)
 	}
+
 	return nil, nil
 }
 
@@ -222,7 +242,7 @@ func (m *MailSenderServer) DailySendMail(req *pb.RequestSendStatisticServerToEma
 
 	// Receiver email address.
 	to := []string{
-		req.To,
+		req.Email,
 	}
 
 	// smtp server configuration.
