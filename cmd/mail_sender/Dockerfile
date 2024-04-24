@@ -1,0 +1,21 @@
+FROM golang:1.22
+
+WORKDIR /go/app
+
+COPY ./cmd/mail_sender ./cmd/mail_sender
+COPY ./pkg/mail_sender ./pkg/mail_sender
+COPY ./pkg/env ./pkg/env
+COPY ./pkg/server ./pkg/server
+COPY ./pkg/auth ./pkg/auth
+COPY ./pkg/redis ./pkg/redis
+COPY ./pkg/cache ./pkg/cache
+COPY ./pkg/logger ./pkg/logger
+COPY go.mod .
+
+RUN apt-get update
+RUN go mod tidy
+RUN mkdir log
+RUN mkdir log/mail_sender
+RUN go build ./cmd/mail_sender
+
+ENTRYPOINT [ "./mail_sender"]
