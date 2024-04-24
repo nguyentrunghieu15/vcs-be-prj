@@ -28,7 +28,7 @@ import (
 
 type LogMessageServer map[string]interface{}
 
-type ServerRepo interface {
+type IServerRepo interface {
 	CheckServerExists(map[string]interface{}) bool
 	CountServers(*string, *pb.FilterServer) (int64, error)
 	CreateBacth(uint64, []map[string]interface{}) (*pb.ImportServerResponse, error)
@@ -44,10 +44,11 @@ type ServerRepo interface {
 
 type ServerService struct {
 	pb.ServerServiceServer
-	l          *logger.LoggerDecorator
-	ServerRepo ServerRepo
+	l          logger.LoggerDecoratorInterface
+	ServerRepo IServerRepo
 	kafka      ProducerClientInterface
 	auhthorize *auth.Authorizer
+	validator  IValidator
 }
 
 type ServerServiceKafkaLogger struct {
@@ -122,6 +123,7 @@ func NewServerService() *ServerService {
 		l:          newLogger,
 		kafka:      newKafka,
 		auhthorize: &auth.Authorizer{},
+		validator:  NewServerServiceValidator(),
 	}
 }
 
@@ -135,17 +137,7 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 	)
 
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Create server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
+	header, _ := metadata.FromIncomingContext(ctx)
 
 	role, ok := header["role"]
 	if !ok {
@@ -153,10 +145,10 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Create server",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !s.auhthorize.HavePermisionToCreateServer(model.UserRole(role[0])) {
@@ -171,7 +163,7 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 	}
 
 	// validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -233,7 +225,7 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return ConvertServerModelToServerProto(*createdServer), nil
+	return ConvertServerModelToServerProto(*createdServer)
 }
 func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServerByIdRequest) (*emptypb.Empty, error) {
 	s.l.Log(
@@ -245,18 +237,7 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 	)
 
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Delete server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
+	header, _ := metadata.FromIncomingContext(ctx)
 	role, ok := header["role"]
 	if !ok {
 		s.l.Log(
@@ -283,7 +264,7 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -296,7 +277,7 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 	}
 
 	// check server already exsits
-	id, _ := uuid.Parse(req.GetId())
+	id := uuid.MustParse(req.GetId())
 	_, err := s.ServerRepo.FindOneById(id)
 	if err != nil {
 		s.l.Log(
@@ -343,18 +324,7 @@ func (s *ServerService) DeleteServerByName(
 		},
 	)
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Delete server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
+	header, _ := metadata.FromIncomingContext(ctx)
 	role, ok := header["role"]
 	if !ok {
 		s.l.Log(
@@ -381,7 +351,7 @@ func (s *ServerService) DeleteServerByName(
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -437,18 +407,7 @@ func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRe
 	// Authorize
 
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Export server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
+	header, _ := metadata.FromIncomingContext(ctx)
 	role, ok := header["role"]
 	if !ok {
 		s.l.Log(
@@ -475,7 +434,7 @@ func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRe
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -519,18 +478,7 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 	)
 
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Get server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
+	header, _ := metadata.FromIncomingContext(ctx)
 	role, ok := header["role"]
 	if !ok {
 		s.l.Log(
@@ -557,7 +505,7 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -569,7 +517,7 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 	}
 
 	// Get Server
-	id, _ := uuid.Parse(req.GetId())
+	id := uuid.MustParse(req.GetId())
 	server, err := s.ServerRepo.FindOneById(id)
 	if err != nil {
 		s.l.Log(
@@ -583,7 +531,7 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	return ConvertServerModelToServerProto(*server), nil
+	return ConvertServerModelToServerProto(*server)
 }
 func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerByNameRequest) (*pb.Server, error) {
 	s.l.Log(
@@ -595,18 +543,7 @@ func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerBy
 	)
 
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Get server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
+	header, _ := metadata.FromIncomingContext(ctx)
 	role, ok := header["role"]
 	if !ok {
 		s.l.Log(
@@ -633,7 +570,7 @@ func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerBy
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -658,7 +595,7 @@ func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerBy
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	return ConvertServerModelToServerProto(*server), nil
+	return ConvertServerModelToServerProto(*server)
 }
 func (s *ServerService) ImportServer(stream pb.ServerService_ImportServerServer) error {
 	// TO-DO code
@@ -776,18 +713,7 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 		},
 	)
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "List server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
+	header, _ := metadata.FromIncomingContext(ctx)
 	role, ok := header["role"]
 	if !ok {
 		s.l.Log(
@@ -814,19 +740,8 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 	// TO-DO : Write codo to Authorize
 
 	//validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "List server",
-				"Error":  "Invalid data in request",
-				"Detail": err,
-			},
-		)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	if err := ValidateListServerQuery(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -861,8 +776,8 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
-	return &pb.ListServersResponse{Servers: ConvertListServerModelToListServerProto(servers), Total: total}, nil
+	t, err := ConvertListServerModelToListServerProto(servers)
+	return &pb.ListServersResponse{Servers: t, Total: total}, err
 }
 func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest) (*pb.Server, error) {
 	s.l.Log(
@@ -876,18 +791,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 	// TO-DO Authorize
 
 	// Authorize
-	header, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Update server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
+	header, _ := metadata.FromIncomingContext(ctx)
 	role, ok := header["role"]
 	if !ok {
 		s.l.Log(
@@ -912,7 +816,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 	}
 
 	// validate data
-	if err := req.Validate(); err != nil {
+	if err := s.validator.Validate(req); err != nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
@@ -925,7 +829,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	id, _ := uuid.Parse(req.GetId())
+	id := uuid.MustParse(req.GetId())
 
 	// check already exists server
 	if existsServer, _ := s.ServerRepo.FindOneByName(req.GetName()); existsServer != nil &&
@@ -976,5 +880,5 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 		)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return ConvertServerModelToServerProto(*updatedServer), nil
+	return ConvertServerModelToServerProto(*updatedServer)
 }

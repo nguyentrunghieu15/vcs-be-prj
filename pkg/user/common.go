@@ -2,7 +2,6 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/nguyentrunghieu15/vcs-common-prj/apu/user"
@@ -127,7 +126,6 @@ func ConvertUserModelToUserProto(u model.User) (*user.ResponseUser, error) {
 		result.UpdatedAt = u.UpdatedAt.Format(time.RFC3339)
 	}
 	if _, ok := mapTemp["deletedAt"]; ok && mapTemp["deletedAt"] != nil {
-		fmt.Println(mapTemp["deletedAt"])
 		result.DeletedAt = u.DeletedAt.Time.Format(time.RFC3339)
 	}
 

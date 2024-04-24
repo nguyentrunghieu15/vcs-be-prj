@@ -28,27 +28,32 @@ func TypeSortToString(v model.TypeSort) string {
 	return ""
 }
 
-func (u *UserRepositoryDecorator) FindUsers(req *user.ListUsersRequest) ([]model.User, error) {
-	var user []model.User
-	result := u.db
-	if req.GetPagination() != nil {
-		if limit := req.GetPagination().Limit; limit != nil && *limit > 1 {
-			result = result.Limit(int(*limit))
+func AddPagination(statement *gorm.DB, req *user.ListUsersRequest) *gorm.DB {
+	if req.Pagination != nil {
+		if limit := req.Pagination.Limit; limit != nil && *limit >= 1 {
+			statement = statement.Limit(int(*limit))
 		}
-		page := req.GetPagination().Page
-		pageSize := req.GetPagination().PageSize
+		page := req.Pagination.Page
+		pageSize := req.Pagination.PageSize
 		if page != nil && pageSize != nil && *page > 0 && *pageSize > 0 {
-			result.Offset(int((*page - 1) * (*pageSize)))
+			statement.Offset(int((*page - 1) * (*pageSize)))
 		}
-		if orderBy := req.GetPagination().SortBy; orderBy != nil {
-			if req.GetPagination().Sort != nil && req.GetPagination().Sort == server.TypeSort_DESC.Enum() {
-				result = result.Order(fmt.Sprintf("%v %v", orderBy, "DESC"))
+		if orderBy := req.Pagination.SortBy; orderBy != nil {
+			if req.Pagination.Sort != nil && req.Pagination.Sort == server.TypeSort_DESC.Enum() {
+				statement = statement.Order(fmt.Sprintf("%v %v", orderBy, "DESC"))
 			} else {
-				result = result.Order(orderBy)
+				statement = statement.Order(orderBy)
 			}
 
 		}
 	}
+	return statement
+}
+
+func (u *UserRepositoryDecorator) FindUsers(req *user.ListUsersRequest) ([]model.User, error) {
+	var user []model.User
+	result := u.db
+	AddPagination(result, req)
 	result = result.Find(&user)
 	if result.Error != nil {
 		return nil, result.Error

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -169,67 +168,6 @@ func NewServerRepository(db *gorm.DB) *ServerRepositoryDecorator {
 	return &ServerRepositoryDecorator{model.CreateServerRepository(db), db}
 }
 
-func ParseMapCreateServerRequest(req *pb.CreateServerRequest) (map[string]interface{}, error) {
-	t, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
-
-	if err = json.Unmarshal(t, &mapRequest); err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < len(DefinedFieldCreateServerRequest); i++ {
-		if value, ok := mapRequest[DefinedFieldCreateServerRequest[i]["fieldNameProto"]]; ok {
-			result[DefinedFieldCreateServerRequest[i]["fieldNameModel"]] = value
-		}
-	}
-
-	if _, ok := result["Status"]; ok {
-		if req.GetStatus() == pb.CreateServerRequest_OFF {
-			result["Status"] = model.Off
-		}
-		if req.GetStatus() == pb.CreateServerRequest_ON {
-			result["Status"] = model.On
-		}
-	}
-	return result, nil
-}
-
-func ParseMapUpdateServerRequest(req *pb.UpdateServerRequest) (map[string]interface{}, error) {
-	t, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
-
-	if err = json.Unmarshal(t, &mapRequest); err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < len(DefinedFieldUpdateServerRequest); i++ {
-		if value, ok := mapRequest[DefinedFieldUpdateServerRequest[i]["fieldNameProto"]]; ok {
-			result[DefinedFieldUpdateServerRequest[i]["fieldNameModel"]] = value
-		}
-	}
-
-	// if _, ok := result["Status"]; ok {
-	// 	if req.GetStatus() == pb.ServerStatus_OFF {
-	// 		result["Status"] = model.Off
-	// 	}
-	// 	if req.GetStatus() == pb.ServerStatus_ON {
-	// 		result["Status"] = model.On
-	// 	}
-	// }
-	result["Status"] = nil
-	return result, nil
-}
-
 func (s *ServerRepositoryDecorator) CheckServerExists(data map[string]interface{}) bool {
 	var count int64
 	result := s.db.Model(&model.Server{})
@@ -249,22 +187,6 @@ func (s *ServerRepositoryDecorator) CheckServerExists(data map[string]interface{
 		return true
 	}
 	return false
-}
-
-func ConvertServerModelMapToServerProto(server map[string]interface{}) *pb.Server {
-	// Convert the map to JSON
-	jsonData, _ := json.Marshal(server)
-	var structData model.Server
-	json.Unmarshal(jsonData, &structData)
-	return ConvertServerModelToServerProto(structData)
-}
-
-func ConvertListServerModelMapToListServerProto(s []map[string]interface{}) []*pb.Server {
-	var result []*pb.Server = make([]*pb.Server, 0)
-	for _, v := range s {
-		result = append(result, ConvertServerModelMapToServerProto(v))
-	}
-	return result
 }
 
 func (s *ServerRepositoryDecorator) CreateBacth(
@@ -290,10 +212,12 @@ func (s *ServerRepositoryDecorator) CreateBacth(
 			return nil, result.Error
 		}
 	}
+	t1, _ := ConvertListServerModelMapToListServerProto(resImportServer)
+	t2, _ := ConvertListServerModelMapToListServerProto(abortServer)
 	return &pb.ImportServerResponse{
 		NumServerImported: int64(len(resImportServer)),
-		ServerImported:    ConvertListServerModelMapToListServerProto(resImportServer),
+		ServerImported:    t1,
 		NumServerFail:     int64(len(abortServer)),
-		ServerFail:        ConvertListServerModelMapToListServerProto(abortServer),
+		ServerFail:        t2,
 	}, nil
 }
