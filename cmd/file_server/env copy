@@ -1,0 +1,5 @@
+
+#file server
+FILE_SERVER_ADDRESS=localhost
+FILE_SERVER_PORT=5006
+FILE_SERVER_FOLDER=file/storage
