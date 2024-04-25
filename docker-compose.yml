@@ -1,0 +1,104 @@
+version: "3.9"
+
+services:
+    db:
+        image: postgres:16.2
+        # set shared memory limit when using docker-compose
+        shm_size: 128mb
+        environment:
+            POSTGRES_PASSWORD: 123456
+            POSTGRES_USER: hiro
+            POSTGRES_DB: vcs-msm
+        entrypoint: /docker-entrypoint-initdb.d
+    cache:
+        image: redis:7.2
+    kafka:
+        image: bitnami/kafka:3.7.0
+        environment:
+            - KAFKA_CFG_NODE_ID=0
+            - KAFKA_CFG_PROCESS_ROLES=controller,broker
+            - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+            - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+            - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+            - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    elastic:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+        volumes:
+            - data01:/usr/share/elasticsearch/data
+    kibana:
+        image: docker.elastic.co/kibana/kibana:8.13.2
+        ports:
+          - 5601:5601
+    auth:
+        build:
+            context: ./cmd/auth
+            dockerfile: Dockerfile
+        volumes:
+            - ./cmd/auth/.env:/go/app/cmd/auth/.env
+        depends_on:
+            - db
+    user:
+        build:
+            context: ./cmd/user
+            dockerfile: Dockerfile
+        depends_on:
+            - db
+        volumes:
+            - ./cmd/user/.env:/go/app/cmd/user/.env
+    file_server:
+        build:
+            context: ./cmd/file_server
+            dockerfile: Dockerfile
+    exporter:
+        build:
+            context: ./cmd/exporter
+            dockerfile: Dockerfile
+        volumes:
+            - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
+        depends_on:
+            - db
+            - kafka
+            - file_server
+    server:
+        build:
+            context: ./cmd/server
+            dockerfile: Dockerfile
+        volumes:
+            - ./cmd/server/.env:/go/app/cmd/server/.env
+        depends_on:
+            - db
+            - kafka
+            - cache
+            - exporter
+    health_check:
+        build:
+            context: ./cmd/health_check
+            dockerfile: Dockerfile
+        volumes:
+            - ./cmd/health_check/.env:/go/app/cmd/health_check/.env
+        depends_on:
+            - db
+            - elastic
+    mail_sender:
+        build:
+            context: ./cmd/mail_sender
+            dockerfile: Dockerfile
+        volumes:
+            - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
+        depends_on:
+            - db
+            - elastic
+    gateway:
+        build:
+            context: ./cmd/gateway
+            dockerfile: Dockerfile
+        ports:
+          - 3000:3000
+        depends_on:
+            - db
+            - auth
+            - user
+            - server
+            - file_server
+            - mail_sender
+            - health_check
