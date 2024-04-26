@@ -7,7 +7,7 @@ COPY ./pkg/env ./pkg/env
 COPY ./pkg/user ./pkg/user
 COPY ./pkg/auth ./pkg/auth
 COPY ./pkg/logger ./pkg/logger
-COPY go.mod .
+COPY ./go.mod .
 
 RUN apt-get update
 RUN go mod tidy

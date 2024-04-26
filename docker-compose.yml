@@ -1,19 +1,23 @@
-version: "3.9"
 
 services:
     db:
         image: postgres:16.2
+        container_name: postgres
         # set shared memory limit when using docker-compose
         shm_size: 128mb
         environment:
             POSTGRES_PASSWORD: 123456
             POSTGRES_USER: hiro
-            POSTGRES_DB: vcs-msm
-        entrypoint: /docker-entrypoint-initdb.d 
+            POSTGRES_DB: vcs_msm
+        volumes:
+            - ./create_table.sql:/docker-entrypoint-initdb.d/create_table.sql
+
     cache:
         image: redis:7.2
+        container_name: redis
     kafka:
         image: bitnami/kafka:3.7.0
+        container_name: kafka
         environment:
             - KAFKA_CFG_NODE_ID=0
             - KAFKA_CFG_PROCESS_ROLES=controller,broker
@@ -21,3 +25,81 @@ services:
             - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
             - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
             - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    elastic:
+        image: elasticsearch:8.13.2
+        container_name: elastic
+        volumes:
+            - ./data01:/usr/share/elasticsearch/data
+    kibana:
+        image: docker.elastic.co/kibana/kibana:8.13.2
+        container_name: kibana
+        ports:
+          - 5601:5601
+    auth:
+        image: auth
+        container_name: auth
+        volumes:
+            - ./cmd/auth/.env:/go/app/cmd/auth/.env
+        depends_on:
+            - db
+    user:
+        image: user
+        container_name: user
+        depends_on:
+            - db
+        volumes:
+            - ./cmd/user/.env:/go/app/cmd/user/.env
+    file_server:
+        image: file_server
+        container_name: file_server
+    exporter:
+        image: exporter
+        container_name: exporter
+        volumes:
+            - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
+        depends_on:
+            - db
+            - kafka
+            - file_server
+    server:
+        image: server
+        container_name: server
+        volumes:
+            - ./cmd/server/.env:/go/app/cmd/server/.env
+        depends_on:
+            - db
+            - kafka
+            - cache
+            - exporter
+    health_check:
+        image: health_check
+        container_name: health_check
+        volumes:
+            - ./cmd/health_check/.env:/go/app/cmd/health_check/.env
+        depends_on:
+            - db
+            - elastic
+    mail_sender:
+        image: mail_sender
+        container_name: mail_sender
+        volumes:
+            - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
+        depends_on:
+            - db
+            - elastic
+    gateway:
+        image: gateway
+        container_name: gateway
+        ports:
+          - 3000:3000
+        volumes:
+            - ./cmd/gateway/.env:/go/app/cmd/gateway/.env
+        command: ["-create-admin"]
+        depends_on:
+            - db
+            - auth
+            - user
+            - server
+            - file_server
+            - mail_sender
+            - health_check

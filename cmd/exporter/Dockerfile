@@ -10,12 +10,14 @@ COPY ./pkg/server ./pkg/server
 COPY ./pkg/redis ./pkg/redis
 COPY ./pkg/auth ./pkg/auth
 COPY ./pkg/cache ./pkg/cache
-COPY go.mod .
+COPY ./go.mod .
 
 RUN apt-get update
 RUN go mod tidy
 RUN mkdir log
 RUN mkdir log/exporter
+RUN mkdir file
+RUN mkdir file/exporter
 RUN go build ./cmd/exporter
 
 ENTRYPOINT [ "./exporter"]
