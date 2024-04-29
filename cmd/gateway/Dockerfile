@@ -13,6 +13,8 @@ RUN apt-get update
 RUN go mod tidy
 RUN mkdir log
 RUN mkdir log/gateway
+RUN mkdir file
+RUN mkdir file/gateway
 RUN go build ./cmd/gateway
 
 ENTRYPOINT [ "./gateway"]

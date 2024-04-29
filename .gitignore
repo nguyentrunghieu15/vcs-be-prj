@@ -3,4 +3,4 @@ log/*/*
 file/*/*
 .vscode
 http_ca.crt
-.data01
+data01
