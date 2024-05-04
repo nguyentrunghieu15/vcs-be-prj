@@ -43,24 +43,28 @@ services:
         ports:
           - 5601:5601
     auth:
-        image: auth
+        build:
+            dockerfile: ./cmd/auth/Dockerfile
         container_name: auth
         volumes:
             - ./cmd/auth/.env:/go/app/cmd/auth/.env
         depends_on:
             - db
     user:
-        image: user
+        build:
+            dockerfile: ./cmd/user/Dockerfile
         container_name: user
         depends_on:
             - db
         volumes:
             - ./cmd/user/.env:/go/app/cmd/user/.env
     file_server:
-        image: file_server
+        build:
+            dockerfile: ./cmd/file_server/Dockerfile
         container_name: file_server
     exporter:
-        image: exporter
+        build:
+            dockerfile: ./cmd/exporter/Dockerfile
         container_name: exporter
         volumes:
             - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
@@ -69,7 +73,8 @@ services:
             - kafka
             - file_server
     server:
-        image: server
+        build:
+            dockerfile: ./cmd/server/Dockerfile
         container_name: server
         volumes:
             - ./cmd/server/.env:/go/app/cmd/server/.env
@@ -79,7 +84,8 @@ services:
             - cache
             - exporter
     health_check:
-        image: health_check
+        build:
+            dockerfile: ./cmd/health_check/Dockerfile
         container_name: health_check
         volumes:
             - ./cmd/health_check/.env:/go/app/cmd/health_check/.env
@@ -87,7 +93,8 @@ services:
             - db
             - elastic
     mail_sender:
-        image: mail_sender
+        build:
+            dockerfile: ./cmd/mail_sender/Dockerfile
         container_name: mail_sender
         volumes:
             - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
@@ -95,7 +102,8 @@ services:
             - db
             - elastic
     gateway:
-        image: gateway
+        build:
+            dockerfile: ./cmd/gateway/Dockerfile
         container_name: gateway
         ports:
           - 3000:3000
