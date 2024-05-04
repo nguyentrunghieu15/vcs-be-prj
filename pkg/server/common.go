@@ -140,27 +140,20 @@ func ParseMapCreateServerRequest(req *pb.CreateServerRequest) (map[string]interf
 	}
 
 	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
 
 	if err = json.Unmarshal(t, &mapRequest); err != nil {
 		return nil, err
 	}
 
-	for i := 0; i < len(DefinedFieldCreateServerRequest); i++ {
-		if value, ok := mapRequest[DefinedFieldCreateServerRequest[i]["fieldNameProto"]]; ok {
-			result[DefinedFieldCreateServerRequest[i]["fieldNameModel"]] = value
-		}
-	}
-
-	if _, ok := result["Status"]; ok {
+	if _, ok := mapRequest["status"]; ok {
 		if req.GetStatus() == pb.CreateServerRequest_OFF {
-			result["Status"] = model.Off
+			mapRequest["status"] = model.Off
 		}
 		if req.GetStatus() == pb.CreateServerRequest_ON {
-			result["Status"] = model.On
+			mapRequest["status"] = model.On
 		}
 	}
-	return result, nil
+	return mapRequest, nil
 }
 
 func ParseMapUpdateServerRequest(req *pb.UpdateServerRequest) (map[string]interface{}, error) {
@@ -170,36 +163,40 @@ func ParseMapUpdateServerRequest(req *pb.UpdateServerRequest) (map[string]interf
 	}
 
 	mapRequest := make(map[string]interface{})
-	result := make(map[string]interface{})
 
 	if err = json.Unmarshal(t, &mapRequest); err != nil {
 		return nil, err
 	}
 
-	for i := 0; i < len(DefinedFieldUpdateServerRequest); i++ {
-		if value, ok := mapRequest[DefinedFieldUpdateServerRequest[i]["fieldNameProto"]]; ok {
-			result[DefinedFieldUpdateServerRequest[i]["fieldNameModel"]] = value
+	if _, ok := mapRequest["status"]; ok {
+		if req.GetStatus() == pb.UpdateServerRequest_OFF {
+			mapRequest["status"] = model.Off
+		}
+		if req.GetStatus() == pb.UpdateServerRequest_ON {
+			mapRequest["status"] = model.On
 		}
 	}
-
-	// if _, ok := result["Status"]; ok {
-	// 	if req.GetStatus() == pb.ServerStatus_OFF {
-	// 		result["Status"] = model.Off
-	// 	}
-	// 	if req.GetStatus() == pb.ServerStatus_ON {
-	// 		result["Status"] = model.On
-	// 	}
-	// }
-	result["Status"] = nil
-	return result, nil
+	return mapRequest, nil
 }
 
 func ConvertServerModelMapToServerProto(server map[string]interface{}) (*pb.Server, error) {
 	// Convert the map to JSON
+	if v, ok := server["status"]; ok {
+		fmt.Println("Here", v)
+		switch model.ServerStatus(v.(string)) {
+		case model.On:
+			server["status"] = pb.Server_ON
+		case model.Off:
+			server["status"] = pb.Server_OFF
+		default:
+			server["status"] = pb.Server_NONE
+		}
+	}
 	jsonData, _ := json.Marshal(server)
-	var structData model.Server
-	json.Unmarshal(jsonData, &structData)
-	return ConvertServerModelToServerProto(structData)
+
+	var structData pb.Server
+	e := json.Unmarshal(jsonData, &structData)
+	return &structData, e
 }
 
 func ConvertListServerModelMapToListServerProto(s []map[string]interface{}) ([]*pb.Server, error) {
