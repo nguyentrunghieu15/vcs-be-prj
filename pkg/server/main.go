@@ -192,19 +192,7 @@ func (s *ServerService) CreateServer(ctx context.Context, req *pb.CreateServerRe
 	}
 
 	// Parse data request
-	server, err := ParseMapCreateServerRequest(req)
-	if err != nil {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Create server",
-				"Name":   req.GetName(),
-				"Error":  "Parse data",
-				"Detail": fmt.Errorf("Parse data: %v", err),
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+	server, _ := ParseMapCreateServerRequest(req)
 
 	// Get header
 	if v, ok := header["id"]; ok {
@@ -244,10 +232,10 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Delete server",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !s.auhthorize.HavePermisionToDeleteServer(model.UserRole(role[0])) {
@@ -258,7 +246,7 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 				"Error":  "Permission denie",
 			},
 		)
-		return nil, status.Error(codes.PermissionDenied, "Can't delete user")
+		return nil, status.Error(codes.PermissionDenied, "Can't delete server")
 	}
 
 	// TO-DO : Write codo to Authorize
@@ -278,17 +266,16 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 
 	// check server already exsits
 	id := uuid.MustParse(req.GetId())
-	_, err := s.ServerRepo.FindOneById(id)
-	if err != nil {
+	existsServer, _ := s.ServerRepo.FindOneById(id)
+	if existsServer == nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Delete server",
 				"Error":  "Can't delete because not found",
-				"Detail": err,
 			},
 		)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.NotFound, "Not found server")
 	}
 
 	// Get header
@@ -297,7 +284,7 @@ func (s *ServerService) DeleteServerById(ctx context.Context, req *pb.DeleteServ
 	}
 
 	// Delete server
-	err = s.ServerRepo.DeleteOneById(id)
+	err := s.ServerRepo.DeleteOneById(id)
 	if err != nil {
 		s.l.Log(
 			logger.ERROR,
@@ -331,10 +318,10 @@ func (s *ServerService) DeleteServerByName(
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Delete server",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !s.auhthorize.HavePermisionToDeleteServer(model.UserRole(role[0])) {
@@ -345,7 +332,7 @@ func (s *ServerService) DeleteServerByName(
 				"Error":  "Permission denie",
 			},
 		)
-		return nil, status.Error(codes.PermissionDenied, "Can't delete user")
+		return nil, status.Error(codes.PermissionDenied, "Can't delete server")
 	}
 
 	// TO-DO : Write codo to Authorize
@@ -364,17 +351,16 @@ func (s *ServerService) DeleteServerByName(
 	}
 
 	// check Server already exsits
-	_, err := s.ServerRepo.FindOneByName(req.GetName())
-	if err != nil {
+	existsServer, _ := s.ServerRepo.FindOneByName(req.GetName())
+	if existsServer == nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Delete server",
 				"Error":  "Can't delete because not found",
-				"Detail": err,
 			},
 		)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.NotFound, "Not found server")
 	}
 
 	// Get header
@@ -383,7 +369,7 @@ func (s *ServerService) DeleteServerByName(
 	}
 
 	// Delete Server
-	err = s.ServerRepo.DeleteOneByName(req.GetName())
+	err := s.ServerRepo.DeleteOneByName(req.GetName())
 	if err != nil {
 		s.l.Log(
 			logger.ERROR,
@@ -414,10 +400,10 @@ func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRe
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Export server",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !s.auhthorize.HavePermisionToExportServer(model.UserRole(role[0])) {
@@ -428,7 +414,7 @@ func (s *ServerService) ExportServer(ctx context.Context, req *pb.ExportServerRe
 				"Error":  "Permission denie",
 			},
 		)
-		return nil, status.Error(codes.PermissionDenied, "Can't export user")
+		return nil, status.Error(codes.PermissionDenied, "Can't export server")
 	}
 
 	// TO-DO : Write codo to Authorize
@@ -477,31 +463,6 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 		},
 	)
 
-	// Authorize
-	header, _ := metadata.FromIncomingContext(ctx)
-	role, ok := header["role"]
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Get server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
-	if !s.auhthorize.HavePermisionToViewServer(model.UserRole(role[0])) {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Get server",
-				"Error":  "Permission denie",
-			},
-		)
-		return nil, status.Error(codes.PermissionDenied, "Can't get user")
-	}
-
 	// TO-DO : Write codo to Authorize
 
 	//validate data
@@ -518,17 +479,16 @@ func (s *ServerService) GetServerById(ctx context.Context, req *pb.GetServerById
 
 	// Get Server
 	id := uuid.MustParse(req.GetId())
-	server, err := s.ServerRepo.FindOneById(id)
-	if err != nil {
+	server, _ := s.ServerRepo.FindOneById(id)
+	if server == nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Get Server",
 				"Error":  "Internal Server",
-				"Detail": err,
 			},
 		)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.NotFound, "Not found server")
 	}
 
 	return ConvertServerModelToServerProto(*server)
@@ -541,31 +501,6 @@ func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerBy
 			"Name":   req.GetName(),
 		},
 	)
-
-	// Authorize
-	header, _ := metadata.FromIncomingContext(ctx)
-	role, ok := header["role"]
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Get server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
-	if !s.auhthorize.HavePermisionToViewServer(model.UserRole(role[0])) {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Get server",
-				"Error":  "Permission denie",
-			},
-		)
-		return nil, status.Error(codes.PermissionDenied, "Can't get user")
-	}
 
 	// TO-DO : Write codo to Authorize
 
@@ -582,17 +517,16 @@ func (s *ServerService) GetServerByName(ctx context.Context, req *pb.GetServerBy
 	}
 
 	// Get Server
-	server, err := s.ServerRepo.FindOneByName(req.GetName())
-	if err != nil {
+	server, _ := s.ServerRepo.FindOneByName(req.GetName())
+	if server == nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Get Server by name",
 				"Error":  "Internal Server",
-				"Detail": err,
 			},
 		)
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(codes.NotFound, "Not found server")
 	}
 
 	return ConvertServerModelToServerProto(*server)
@@ -712,31 +646,6 @@ func (s *ServerService) ListServers(ctx context.Context, req *pb.ListServerReque
 			"Action": "Invoked list server",
 		},
 	)
-	// Authorize
-	header, _ := metadata.FromIncomingContext(ctx)
-	role, ok := header["role"]
-	if !ok {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "List server",
-				"Error":  "Can't get header from request",
-			},
-		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
-	}
-
-	if !s.auhthorize.HavePermisionToViewServer(model.UserRole(role[0])) {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "List server",
-				"Error":  "Permission denie",
-			},
-		)
-		return nil, status.Error(codes.PermissionDenied, "Can't list user")
-	}
-
 	// TO-DO : Write codo to Authorize
 
 	//validate data
@@ -798,10 +707,10 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Update server",
-				"Error":  "Can't get header from request",
+				"Error":  "Can't get role from request",
 			},
 		)
-		return nil, status.Error(codes.Internal, "Can't get header from request")
+		return nil, status.Error(codes.Internal, "Can't get role from request")
 	}
 
 	if !s.auhthorize.HavePermisionToUpdateServer(model.UserRole(role[0])) {
@@ -832,34 +741,21 @@ func (s *ServerService) UpdateServer(ctx context.Context, req *pb.UpdateServerRe
 	id := uuid.MustParse(req.GetId())
 
 	// check already exists server
-	if existsServer, _ := s.ServerRepo.FindOneByName(req.GetName()); existsServer != nil &&
-		existsServer.ID != id {
+	if existsServer, _ := s.ServerRepo.FindOneByName(req.GetName()); existsServer == nil {
 		s.l.Log(
 			logger.ERROR,
 			LogMessageServer{
 				"Action": "Update server",
 				"Id":     req.GetId(),
-				"Error":  "Already Exists",
-				"Detail": fmt.Errorf("Already Exists server name :%v", req.GetName()),
+				"Error":  "Not found",
+				"Detail": fmt.Errorf("Not found server name :%v", req.GetName()),
 			},
 		)
-		return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("Already Exists server name: %v", req.GetName()))
+		return nil, status.Error(codes.AlreadyExists, fmt.Errorf("Not found server name :%v", req.GetName()).Error())
 	}
 
 	// Parse data request
-	server, err := ParseMapUpdateServerRequest(req)
-	if err != nil {
-		s.l.Log(
-			logger.ERROR,
-			LogMessageServer{
-				"Action": "Update server",
-				"Id":     req.GetId(),
-				"Error":  "Parse data",
-				"Detail": fmt.Errorf("Parse data: %v", err),
-			},
-		)
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+	server, _ := ParseMapUpdateServerRequest(req)
 
 	// Get header
 	if v, ok := header["id"]; ok {

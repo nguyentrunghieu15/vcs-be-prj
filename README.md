@@ -127,6 +127,13 @@ go run ./cmd/exporter
 ```
 Notice: You can run each service on another machine physic
 
+## Running with docker 
+First of all, complete all step in Install
+```
+Running docker:
+sudo docker compose up -d
+``` 
+
 ## Open API
 You can read API endtrie point of gateway in static folder
 - auth.swagger.json
