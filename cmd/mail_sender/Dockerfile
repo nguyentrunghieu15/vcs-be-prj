@@ -21,6 +21,6 @@ RUN go build -o /go/app/mail_sender ./cmd/mail_sender
 FROM alpine:3.19
 COPY --from=build /go/app/mail_sender /bin/mail_sender
 RUN apk add libc6-compat
-RUN mkdir /bin/log
-RUN mkdir /bin/log/mail_sender
+RUN mkdir /log
+RUN mkdir /log/mail_sender
 CMD [ "/bin/mail_sender" ]

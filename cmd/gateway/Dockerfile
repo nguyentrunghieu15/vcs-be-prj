@@ -21,6 +21,8 @@ RUN go build -o /go/app/gateway ./cmd/gateway
 FROM alpine:3.19
 COPY --from=build /go/app/gateway /bin/gateway
 RUN apk add libc6-compat
-RUN mkdir /bin/log
-RUN mkdir /bin/log/gateway
+RUN mkdir /log
+RUN mkdir /log/gateway
+RUN mkdir /file
+RUN mkdir /file/gateway
 CMD [ "/bin/gateway"]

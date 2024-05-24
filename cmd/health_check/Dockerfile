@@ -22,6 +22,6 @@ RUN go build -o /go/app/health_check ./cmd/health_check
 FROM alpine:3.19
 COPY --from=build /go/app/health_check /bin/health_check
 RUN apk add libc6-compat
-RUN mkdir /bin/log
-RUN mkdir /bin/log/health_check
+RUN mkdir /log
+RUN mkdir /log/health_check
 CMD [ "/bin/health_check"]

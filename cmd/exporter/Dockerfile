@@ -23,6 +23,6 @@ RUN go build -o /go/app/exporter ./cmd/exporter
 FROM alpine:3.19
 COPY --from=build /go/app/exporter /bin/exporter
 RUN apk add libc6-compat
-RUN mkdir /bin/log
-RUN mkdir /bin/log/exporter
+RUN mkdir /log
+RUN mkdir /log/exporter
 CMD [ "/bin/exporter"]
