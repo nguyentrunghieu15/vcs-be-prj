@@ -22,4 +22,6 @@ RUN go build -o /go/app/server ./cmd/server
 FROM alpine:3.19
 COPY --from=build /go/app/server /bin/server
 RUN apk add libc6-compat
+RUN mkdir /bin/log
+RUN mkdir /bin/log/server
 CMD [ "/bin/server" ]

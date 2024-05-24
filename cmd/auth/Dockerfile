@@ -17,4 +17,6 @@ RUN go build -o /go/app/auth ./cmd/auth
 FROM alpine:3.19
 COPY --from=build /go/app/auth /bin/auth
 RUN apk add libc6-compat
+RUN mkdir /bin/log
+RUN mkdir /bin/log/auth
 CMD [ "/bin/auth" ]

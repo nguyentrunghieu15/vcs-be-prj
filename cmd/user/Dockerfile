@@ -18,4 +18,6 @@ RUN go build -o /go/app/user ./cmd/user
 FROM alpine:3.19
 COPY --from=build /go/app/user /bin/user
 RUN apk add libc6-compat
+RUN mkdir /bin/log
+RUN mkdir /bin/log/user
 CMD [ "/bin/user" ]
