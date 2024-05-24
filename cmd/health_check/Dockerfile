@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22 as build
 
 WORKDIR /go/app
 
@@ -16,6 +16,10 @@ RUN apt-get update
 RUN go mod tidy
 RUN mkdir log
 RUN mkdir log/health_check
-RUN go build ./cmd/health_check
+RUN go build -o /go/app/health_check ./cmd/health_check
 
-ENTRYPOINT [ "./health_check"]
+
+FROM alpine:3.19
+COPY --from=build /go/app/health_check /bin/health_check
+RUN apk add libc6-compat
+CMD [ "/bin/health_check"]

@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22 as build
 
 WORKDIR /go/app
 
@@ -15,6 +15,10 @@ RUN mkdir log
 RUN mkdir log/gateway
 RUN mkdir file
 RUN mkdir file/gateway
-RUN go build ./cmd/gateway
+RUN go build -o /go/app/gateway ./cmd/gateway
 
-ENTRYPOINT [ "./gateway"]
+
+FROM alpine:3.19
+COPY --from=build /go/app/gateway /bin/gateway
+RUN apk add libc6-compat
+CMD [ "/bin/gateway"]

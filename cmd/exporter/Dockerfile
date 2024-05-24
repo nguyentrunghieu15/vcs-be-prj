@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22 as build
 
 WORKDIR /go/app
 
@@ -18,6 +18,9 @@ RUN mkdir log
 RUN mkdir log/exporter
 RUN mkdir file
 RUN mkdir file/exporter
-RUN go build ./cmd/exporter
+RUN go build -o /go/app/exporter ./cmd/exporter
 
-ENTRYPOINT [ "./exporter"]
+FROM alpine:3.19
+COPY --from=build /go/app/exporter /bin/exporter
+RUN apk add libc6-compat
+CMD [ "/bin/exporter"]

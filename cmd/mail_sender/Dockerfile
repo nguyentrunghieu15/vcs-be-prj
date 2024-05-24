@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22 as build
 
 WORKDIR /go/app
 
@@ -16,6 +16,9 @@ RUN apt-get update
 RUN go mod tidy
 RUN mkdir log
 RUN mkdir log/mail_sender
-RUN go build ./cmd/mail_sender
+RUN go build -o /go/app/mail_sender ./cmd/mail_sender
 
-ENTRYPOINT [ "./mail_sender"]
+FROM alpine:3.19
+COPY --from=build /go/app/mail_sender /bin/mail_sender
+RUN apk add libc6-compat
+CMD [ "/bin/mail_sender" ]

@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22 as build
 
 WORKDIR /go/app
 
@@ -12,6 +12,9 @@ RUN apt-get update
 RUN mkdir log
 RUN mkdir log/auth
 RUN go mod tidy
-RUN go build ./cmd/auth
+RUN go build -o /go/app/auth ./cmd/auth
 
-ENTRYPOINT [ "./auth"]
+FROM alpine:3.19
+COPY --from=build /go/app/auth /bin/auth
+RUN apk add libc6-compat
+CMD [ "/bin/auth" ]

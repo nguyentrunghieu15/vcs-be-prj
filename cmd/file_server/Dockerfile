@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22 as build
 
 WORKDIR /go/app
 
@@ -13,6 +13,9 @@ RUN mkdir log
 RUN mkdir log/file_server
 RUN mkdir file
 RUN mkdir file/storage
-RUN go build ./cmd/file_server
+RUN go build -o /go/app/file_server ./cmd/file_server
 
-ENTRYPOINT [ "./file_server"]
+FROM alpine:3.19
+COPY --from=build /go/app/file_server /bin/file_server
+RUN apk add libc6-compat
+CMD [ "/bin/file_server"]

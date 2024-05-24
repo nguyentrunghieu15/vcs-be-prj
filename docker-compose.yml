@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
     db:
         image: postgres:16.2
@@ -36,34 +36,40 @@ services:
             - ES_PORT=9200
 
         volumes:
-            - ./data01:/usr/share/elasticsearch/data
+            - data01:/usr/share/elasticsearch/data
     kibana:
         image: docker.elastic.co/kibana/kibana:8.13.2
         container_name: kibana
         ports:
-          - 5601:5601
+            - 5601:5601
     auth:
         image: auth
         container_name: auth
-        volumes:
-            - ./cmd/auth/.env:/go/app/cmd/auth/.env
+        restart: always
+        env_file:
+            - ./cmd/auth/.env
         depends_on:
             - db
     user:
         image: user
         container_name: user
+        restart: always
         depends_on:
             - db
-        volumes:
-            - ./cmd/user/.env:/go/app/cmd/user/.env
+        env_file:
+            - ./cmd/user/.env
     file_server:
         image: file_server
         container_name: file_server
+        env_file:
+            - ./cmd/file_server/.env
+        restart: always
     exporter:
         image: exporter
         container_name: exporter
-        volumes:
-            - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
+        restart: always
+        env_file:
+            - ./cmd/exporter/.env
         depends_on:
             - db
             - kafka
@@ -71,8 +77,9 @@ services:
     server:
         image: server
         container_name: server
-        volumes:
-            - ./cmd/server/.env:/go/app/cmd/server/.env
+        restart: always
+        env_file:
+            - ./cmd/server/.env
         depends_on:
             - db
             - kafka
@@ -81,27 +88,30 @@ services:
     health_check:
         image: health_check
         container_name: health_check
-        volumes:
-            - ./cmd/health_check/.env:/go/app/cmd/health_check/.env
+        restart: always
+        env_file:
+            - ./cmd/health_check/.env
         depends_on:
             - db
             - elastic
     mail_sender:
         image: mail_sender
         container_name: mail_sender
-        volumes:
-            - ./cmd/mail_sender/.env:/go/app/cmd/mail_sender/.env
+        restart: always
+        env_file:
+            - ./cmd/mail_sender/.env
         depends_on:
             - db
             - elastic
     gateway:
         image: gateway
         container_name: gateway
+        restart: always
         ports:
-          - 3000:3000
-        volumes:
-            - ./cmd/gateway/.env:/go/app/cmd/gateway/.env
-        command: ["-create-admin"]
+            - 3000:3000
+        env_file:
+            - ./cmd/gateway/.env
+        command: ["/bin/gateway", "-create-admin"]
         depends_on:
             - db
             - auth
@@ -110,3 +120,5 @@ services:
             - file_server
             - mail_sender
             - health_check
+volumes:
+    data01:
